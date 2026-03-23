@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class ArtistAlbumsViewModel(
   private val repository: AlbumRepository,
-  queueHandler: QueueHandler,
+  private val queueHandler: QueueHandler,
   private val librarySettings: LibrarySettings,
   connectionStateFlow: ConnectionStateFlow
 ) : BaseAlbumViewModel(queueHandler, librarySettings, connectionStateFlow) {
@@ -58,6 +58,24 @@ class ArtistAlbumsViewModel(
         AlbumViewMode.GRID -> AlbumViewMode.LIST
       }
       librarySettings.setAlbumViewMode(next)
+    }
+  }
+
+  fun playArtist(artist: String, shuffle: Boolean) {
+    viewModelScope.launch {
+      if (!checkConnection()) {
+        emit(AlbumUiMessage.NetworkUnavailable)
+        return@launch
+      }
+
+      val result = queueHandler.playArtist(artist = artist, shuffle = shuffle)
+      val message = if (result.isSuccess) {
+        AlbumUiMessage.QueueSuccess(result.getOrNull() ?: 0)
+      } else {
+        AlbumUiMessage.QueueFailed
+      }
+
+      emit(message)
     }
   }
 }

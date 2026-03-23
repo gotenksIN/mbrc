@@ -264,4 +264,57 @@ class ArtistAlbumsViewModelTest : KoinTest {
       coVerify(exactly = 1) { librarySettings.setAlbumViewMode(AlbumViewMode.GRID) }
     }
   }
+
+  @Test
+  fun playArtistShouldEmitQueueSuccessWhenConnected() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns true
+      coEvery { queueHandler.playArtist("Test Artist", false) } returns Outcome.Success(45)
+
+      viewModel.events.test {
+        viewModel.playArtist("Test Artist", shuffle = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(AlbumUiMessage.QueueSuccess(45))
+      }
+
+      coVerify(exactly = 1) { queueHandler.playArtist("Test Artist", false) }
+    }
+  }
+
+  @Test
+  fun playArtistShouldEmitQueueSuccessWhenShuffleEnabled() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns true
+      coEvery { queueHandler.playArtist("Test Artist", true) } returns Outcome.Success(45)
+
+      viewModel.events.test {
+        viewModel.playArtist("Test Artist", shuffle = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(AlbumUiMessage.QueueSuccess(45))
+      }
+
+      coVerify(exactly = 1) { queueHandler.playArtist("Test Artist", true) }
+    }
+  }
+
+  @Test
+  fun playArtistShouldEmitNetworkUnavailableWhenNotConnected() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns false
+
+      viewModel.events.test {
+        viewModel.playArtist("Test Artist", shuffle = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(AlbumUiMessage.NetworkUnavailable)
+      }
+
+      coVerify(exactly = 0) { queueHandler.playArtist(any(), any()) }
+    }
+  }
 }

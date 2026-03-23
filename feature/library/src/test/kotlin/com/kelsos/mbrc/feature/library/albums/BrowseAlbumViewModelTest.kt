@@ -297,6 +297,42 @@ class BrowseAlbumViewModelTest : KoinTest {
   }
 
   @Test
+  fun playAllShouldEmitQueueSuccessWhenConnected() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns true
+      coEvery { queueHandler.playAllAlbums(false) } returns Outcome.Success(32)
+
+      viewModel.events.test {
+        viewModel.playAll(shuffle = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(AlbumUiMessage.QueueSuccess(32))
+      }
+
+      coVerify(exactly = 1) { queueHandler.playAllAlbums(false) }
+    }
+  }
+
+  @Test
+  fun shuffleAllShouldEmitQueueSuccessWhenConnected() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns true
+      coEvery { queueHandler.playAllAlbums(true) } returns Outcome.Success(32)
+
+      viewModel.events.test {
+        viewModel.playAll(shuffle = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(AlbumUiMessage.QueueSuccess(32))
+      }
+
+      coVerify(exactly = 1) { queueHandler.playAllAlbums(true) }
+    }
+  }
+
+  @Test
   fun toggleViewModeShouldSwitchFromAutoToList() {
     runTest(testDispatcher) {
       // Given

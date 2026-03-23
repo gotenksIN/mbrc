@@ -2,13 +2,20 @@ package com.kelsos.mbrc.feature.library.compose.tabs
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kelsos.mbrc.core.common.settings.AlbumSortField
@@ -52,6 +59,8 @@ fun AlbumsTab(
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
     initialValue = SortPreference(AlbumSortField.NAME, SortOrder.ASC)
   )
+  val playAllLabel = stringResource(R.string.menu_play_all)
+  val shuffleAllLabel = stringResource(R.string.menu_shuffle_all)
 
   // Handle navigation events
   LaunchedEffect(Unit) {
@@ -76,6 +85,31 @@ fun AlbumsTab(
     items = albums,
     queueResults = queueResults,
     snackbarHostState = snackbarHostState,
+    headerContent = {
+      ActionHeader {
+        OutlinedButton(
+          onClick = { viewModel.playAll(shuffle = false) },
+          modifier = Modifier.weight(1f)
+        ) {
+          Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
+          androidx.compose.material3.Text(
+            text = playAllLabel,
+            modifier = Modifier.padding(start = 8.dp)
+          )
+        }
+
+        Button(
+          onClick = { viewModel.playAll(shuffle = true) },
+          modifier = Modifier.weight(1f)
+        ) {
+          Icon(imageVector = Icons.Default.Shuffle, contentDescription = null)
+          androidx.compose.material3.Text(
+            text = shuffleAllLabel,
+            modifier = Modifier.padding(start = 8.dp)
+          )
+        }
+      }
+    },
     syncState = SyncState(
       isSyncing = isSyncing,
       showSync = showSync,

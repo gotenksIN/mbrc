@@ -66,6 +66,42 @@ class QueueHandler(
     AppError.NetworkUnavailable.asFailure()
   }
 
+  suspend fun playArtist(artist: String, shuffle: Boolean = false): Outcome<Int> = try {
+    val paths = withContext(dispatchers.database) {
+      trackRepository.getTrackPaths(TrackQuery.Artist(artist))
+    }
+    val orderedPaths = if (shuffle) paths.shuffled() else paths
+    val playPath = orderedPaths.firstOrNull()
+
+    if (playPath != null && queue(Queue.AddAll, orderedPaths, playPath)) {
+      orderedPaths.size.asSuccess()
+    } else {
+      AppError.OperationFailed.asFailure()
+    }
+  } catch (e: IOException) {
+    Timber.e(e)
+    AppError.NetworkUnavailable.asFailure()
+  }
+
+  suspend fun playAllTracks(shuffle: Boolean = false): Outcome<Int> = try {
+    val paths = withContext(dispatchers.database) {
+      trackRepository.getTrackPaths(TrackQuery.All)
+    }
+    val orderedPaths = if (shuffle) paths.shuffled() else paths
+    val playPath = orderedPaths.firstOrNull()
+
+    if (playPath != null && queue(Queue.AddAll, orderedPaths, playPath)) {
+      orderedPaths.size.asSuccess()
+    } else {
+      AppError.OperationFailed.asFailure()
+    }
+  } catch (e: IOException) {
+    Timber.e(e)
+    AppError.NetworkUnavailable.asFailure()
+  }
+
+  suspend fun playAllAlbums(shuffle: Boolean = false): Outcome<Int> = playAllTracks(shuffle)
+
   suspend fun queueGenre(type: Queue, genre: String): Outcome<Int> = try {
     val paths = withContext(dispatchers.database) {
       trackRepository.getTrackPaths(TrackQuery.Genre(genre))

@@ -32,7 +32,7 @@ private data class AlbumSearchParams(
 class BrowseAlbumViewModel(
   private val repository: AlbumRepository,
   private val librarySyncUseCase: LibrarySyncUseCase,
-  queueHandler: QueueHandler,
+  private val queueHandler: QueueHandler,
   private val librarySettings: LibrarySettings,
   connectionStateFlow: ConnectionStateFlow,
   private val searchModel: LibrarySearchModel
@@ -78,6 +78,24 @@ class BrowseAlbumViewModel(
         AlbumViewMode.GRID -> AlbumViewMode.LIST
       }
       librarySettings.setAlbumViewMode(next)
+    }
+  }
+
+  fun playAll(shuffle: Boolean) {
+    viewModelScope.launch {
+      if (!checkConnection()) {
+        emit(AlbumUiMessage.NetworkUnavailable)
+        return@launch
+      }
+
+      val result = queueHandler.playAllAlbums(shuffle = shuffle)
+      val message = if (result.isSuccess) {
+        AlbumUiMessage.QueueSuccess(result.getOrNull() ?: 0)
+      } else {
+        AlbumUiMessage.QueueFailed
+      }
+
+      emit(message)
     }
   }
 }
