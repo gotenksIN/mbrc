@@ -49,3 +49,6 @@ hs_err_pid*.log
 replay_pid*.log
 
 .kotlin
+
+# Local CI signing material
+/.ci-secrets/

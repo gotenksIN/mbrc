@@ -10,6 +10,22 @@ inputs:
   artifact-path:
     description: Artifact path or glob to upload
     required: true
+  keystore-base64:
+    description: Base64-encoded keystore for stable CI signing
+    required: false
+    default: ""
+  keystore-password:
+    description: Keystore password
+    required: false
+    default: ""
+  key-alias:
+    description: Key alias inside the keystore
+    required: false
+    default: ""
+  key-password:
+    description: Key password
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -25,6 +41,24 @@ runs:
 
     - name: Set up Android SDK
       uses: android-actions/setup-android@v3
+
+    - name: Prepare CI signing
+      if: ${{ inputs.keystore-base64 != '' }}
+      shell: bash
+      run: |
+        keystore_path="$PWD/ci-signing.keystore"
+        key_properties_path="$PWD/ci-signing.properties"
+        signing_properties_path="$PWD/signing.properties"
+        printf '%s' '${{ inputs.keystore-base64 }}' | base64 --decode > "$keystore_path"
+        cat > "$key_properties_path" <<EOF
+        keystore=$keystore_path
+        storePass=${{ inputs.keystore-password }}
+        keyAlias=${{ inputs.key-alias }}
+        keyPass=${{ inputs.key-password }}
+        EOF
+        cat > "$signing_properties_path" <<EOF
+        keys=$key_properties_path
+        EOF
 
     - name: Build with Gradle
       shell: bash
