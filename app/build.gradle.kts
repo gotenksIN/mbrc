@@ -91,6 +91,7 @@ val buildTimeProvider = providers.provider {
   df.timeZone = TimeZone.getTimeZone("UTC")
   df.format(Date())
 }
+val isCiBuild = System.getenv("CI")?.equals("true", ignoreCase = true) == true
 
 val appVersionName = "1.6.0-rc.4"
 val appVersionCode = 129
@@ -383,7 +384,9 @@ dependencies {
   androidTestImplementation(libs.kotlin.coroutines.test)
   androidTestImplementation(libs.mockk.android)
 
-  debugImplementation(libs.squareup.leakcanary)
+  if (!isCiBuild) {
+    debugImplementation(libs.squareup.leakcanary)
+  }
   debugImplementation(libs.androidx.fragment.testing)
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
