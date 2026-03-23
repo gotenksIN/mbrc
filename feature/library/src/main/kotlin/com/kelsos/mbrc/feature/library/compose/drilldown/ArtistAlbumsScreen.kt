@@ -1,14 +1,23 @@
 package com.kelsos.mbrc.feature.library.compose.drilldown
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kelsos.mbrc.core.common.settings.AlbumSortField
@@ -105,6 +115,8 @@ fun ArtistAlbumsScreen(
 
   val sortDescription = stringResource(R.string.sort_button_description)
   val viewModeDescription = stringResource(R.string.album_view_mode_description)
+  val playAllLabel = stringResource(R.string.menu_play_all)
+  val shuffleAllLabel = stringResource(R.string.menu_shuffle_all)
 
   ScreenScaffold(
     title = artistName,
@@ -125,6 +137,35 @@ fun ArtistAlbumsScreen(
     modifier = modifier
   ) { paddingValues ->
     Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+      ) {
+        OutlinedButton(
+          onClick = { viewModel.playArtist(artistName, shuffle = false) },
+          modifier = Modifier.weight(1f)
+        ) {
+          Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
+          Text(
+            text = playAllLabel,
+            modifier = Modifier.padding(start = 8.dp)
+          )
+        }
+
+        Button(
+          onClick = { viewModel.playArtist(artistName, shuffle = true) },
+          modifier = Modifier.weight(1f)
+        ) {
+          Icon(imageVector = Icons.Default.Shuffle, contentDescription = null)
+          Text(
+            text = shuffleAllLabel,
+            modifier = Modifier.padding(start = 8.dp)
+          )
+        }
+      }
+
       if (isGridMode) {
         PagingGridScreen(
           items = albums,

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -290,6 +291,7 @@ fun <T : Any> SwipeRefreshScreen(
   emptyMessage: String = stringResource(R.string.no_data),
   emptyIcon: ImageVector? = null,
   key: ((T) -> Any)? = null,
+  headerContent: (@Composable () -> Unit)? = null,
   itemContent: @Composable (T) -> Unit
 ) {
   PullToRefreshBox(
@@ -319,6 +321,12 @@ fun <T : Any> SwipeRefreshScreen(
         LazyColumn(
           modifier = Modifier.fillMaxSize()
         ) {
+          if (headerContent != null) {
+            item(contentType = "header") {
+              headerContent()
+            }
+          }
+
           items(
             count = items.itemCount,
             key = key?.let { keyFunc ->
@@ -422,6 +430,7 @@ fun <T : Any> SwipeRefreshGridScreen(
   emptyMessage: String = stringResource(R.string.no_data),
   emptyIcon: ImageVector? = null,
   key: ((T) -> Any)? = null,
+  headerContent: (@Composable () -> Unit)? = null,
   itemContent: @Composable (T) -> Unit
 ) {
   PullToRefreshBox(
@@ -455,6 +464,15 @@ fun <T : Any> SwipeRefreshGridScreen(
           horizontalArrangement = Arrangement.spacedBy(8.dp),
           verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+          if (headerContent != null) {
+            item(
+              span = { GridItemSpan(maxLineSpan) },
+              contentType = "header"
+            ) {
+              headerContent()
+            }
+          }
+
           items(
             count = items.itemCount,
             key = key?.let { keyFunc ->

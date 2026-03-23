@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 class BrowseTrackViewModel(
   private val repository: TrackRepository,
   private val librarySyncUseCase: LibrarySyncUseCase,
-  queueHandler: QueueHandler,
+  private val queueHandler: QueueHandler,
   private val searchModel: LibrarySearchModel,
   private val librarySettings: LibrarySettings,
   connectionStateFlow: ConnectionStateFlow
@@ -55,6 +55,24 @@ class BrowseTrackViewModel(
   fun updateSortPreference(preference: TrackSortPreference) {
     viewModelScope.launch {
       librarySettings.setTrackSortPreference(preference)
+    }
+  }
+
+  fun playAll(shuffle: Boolean) {
+    viewModelScope.launch {
+      if (!checkConnection()) {
+        emit(TrackUiMessage.NetworkUnavailable)
+        return@launch
+      }
+
+      val result = queueHandler.playAllTracks(shuffle = shuffle)
+      val message = if (result.isSuccess) {
+        TrackUiMessage.QueueSuccess(result.getOrNull() ?: 0)
+      } else {
+        TrackUiMessage.QueueFailed
+      }
+
+      emit(message)
     }
   }
 }

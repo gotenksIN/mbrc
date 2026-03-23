@@ -1,11 +1,15 @@
 package com.kelsos.mbrc.feature.library.compose.tabs
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.kelsos.mbrc.core.common.utilities.Outcome
 import com.kelsos.mbrc.core.ui.compose.QueueResultEffect
@@ -29,6 +33,7 @@ fun <T : Any> LibraryBrowseTab(
   itemKey: (T) -> Any,
   modifier: Modifier = Modifier,
   isGridMode: Boolean = false,
+  headerContent: (@Composable () -> Unit)? = null,
   gridItemContent: @Composable ((T) -> Unit)? = null,
   itemContent: @Composable (T) -> Unit
 ) {
@@ -50,6 +55,7 @@ fun <T : Any> LibraryBrowseTab(
       emptyMessage = emptyState.message,
       emptyIcon = emptyState.icon,
       key = itemKey,
+      headerContent = headerContent,
       itemContent = gridItemContent
     )
   } else {
@@ -65,7 +71,20 @@ fun <T : Any> LibraryBrowseTab(
       emptyMessage = emptyState.message,
       emptyIcon = emptyState.icon,
       key = itemKey,
+      headerContent = headerContent,
       itemContent = itemContent
     )
+  }
+}
+
+@Composable
+fun ActionHeader(content: @Composable RowScope.() -> Unit) {
+  androidx.compose.foundation.layout.Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp, vertical = 12.dp),
+    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+  ) {
+    content()
   }
 }

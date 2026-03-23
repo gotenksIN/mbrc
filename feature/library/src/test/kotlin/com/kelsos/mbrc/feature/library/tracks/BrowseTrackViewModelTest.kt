@@ -399,4 +399,40 @@ class BrowseTrackViewModelTest : KoinTest {
       coVerify { librarySettings.setTrackSortPreference(newPreference) }
     }
   }
+
+  @Test
+  fun playAllShouldEmitQueueSuccessWhenConnected() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns true
+      coEvery { queueHandler.playAllTracks(false) } returns Outcome.Success(45)
+
+      viewModel.events.test {
+        viewModel.playAll(shuffle = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(TrackUiMessage.QueueSuccess(45))
+      }
+
+      coVerify(exactly = 1) { queueHandler.playAllTracks(false) }
+    }
+  }
+
+  @Test
+  fun shuffleAllShouldEmitQueueSuccessWhenConnected() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns true
+      coEvery { queueHandler.playAllTracks(true) } returns Outcome.Success(45)
+
+      viewModel.events.test {
+        viewModel.playAll(shuffle = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(TrackUiMessage.QueueSuccess(45))
+      }
+
+      coVerify(exactly = 1) { queueHandler.playAllTracks(true) }
+    }
+  }
 }
