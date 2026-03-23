@@ -44,6 +44,14 @@ class MediaIntentHandler(
       return false
     }
 
+    return handleKeyEvent(event)
+  }
+
+  fun handleKeyEvent(event: KeyEvent): Boolean {
+    if (event.action != KeyEvent.ACTION_DOWN) {
+      return false
+    }
+
     return when (event.keyCode) {
       KeyEvent.KEYCODE_HEADSETHOOK -> detectDoubleClick()
 

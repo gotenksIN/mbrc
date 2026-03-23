@@ -13,6 +13,7 @@ import androidx.core.content.getSystemService
 import androidx.preference.PreferenceManager
 import androidx.work.WorkManager
 import com.kelsos.mbrc.adapters.RemoteViewIntentBuilderImpl
+import com.kelsos.mbrc.core.common.state.PlayerScreenVisibilityTracker
 import com.kelsos.mbrc.core.platform.intents.AppLauncher
 import com.kelsos.mbrc.core.platform.intents.MediaIntentBuilder
 import com.kelsos.mbrc.service.NotificationActionReceiver
@@ -60,6 +61,7 @@ val androidModule = module {
   singleOf(::MediaSessionManager)
   singleOf(::NotificationBuilder)
   singleOf(::MediaIntentHandler)
+  singleOf(::PlayerScreenVisibilityTracker)
   singleOf(::RemoteViewIntentBuilderImpl) {
     bind<MediaIntentBuilder>()
     bind<AppLauncher>()
