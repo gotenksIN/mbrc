@@ -227,12 +227,14 @@ private fun LyricsLine(
   isActive: Boolean,
   modifier: Modifier = Modifier
 ) {
-  if (text.isBlank()) {
+  val displayText = text.removeLeadingTimestamp().trim()
+
+  if (displayText.isBlank()) {
     // Spacer for empty lines (verse breaks)
     Spacer(modifier = modifier.height(16.dp))
   } else {
     Text(
-      text = text,
+      text = displayText,
       style = MaterialTheme.typography.headlineSmall.copy(
         fontWeight = if (isActive) FontWeight.Black else FontWeight.Bold,
         lineHeight = 32.sp
@@ -265,6 +267,8 @@ private fun leadingTimestampMs(line: String): Long? {
 
   return minutes * 60_000L + seconds * 1_000L + millis
 }
+
+private fun String.removeLeadingTimestamp(): String = replaceFirst(leadingTimestampRegex, "")
 
 private fun findActiveLyricIndex(timestamps: List<Long?>, positionMs: Long): Int {
   var activeIndex = -1
