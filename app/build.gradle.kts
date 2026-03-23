@@ -499,12 +499,19 @@ tasks {
   }
 
   afterEvaluate {
-    // Set up Google Services task dependencies for all variants
+    // The Google Services plugin is project-wide once applied, so disable its tasks for
+    // GitHub variants entirely. Those variants do not include Firebase dependencies.
     listOf(
       "processGithubDebugGoogleServices",
       "processGithubReleaseGoogleServices",
       "processGithubBenchmarkReleaseGoogleServices",
       "processGithubNonMinifiedReleaseGoogleServices",
+    ).forEach { taskName ->
+      tasks.findByName(taskName)?.enabled = false
+    }
+
+    // Play builds require a real local google-services.json unless CI injects the dummy file.
+    listOf(
       "processPlayDebugGoogleServices",
       "processPlayReleaseGoogleServices",
       "processPlayBenchmarkReleaseGoogleServices",
