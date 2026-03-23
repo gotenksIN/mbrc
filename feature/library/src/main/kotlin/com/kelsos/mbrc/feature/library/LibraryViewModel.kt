@@ -14,6 +14,7 @@ import com.kelsos.mbrc.feature.library.domain.SyncOutcome
 import com.kelsos.mbrc.feature.library.ui.LibraryUiEvent
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -32,6 +33,7 @@ class LibraryViewModel(
   val syncResults: Flow<SyncOutcome> = librarySyncWorkHandler.syncResults()
 
   val albumArtistsOnly: Flow<Boolean> = librarySettings.shouldDisplayOnlyArtists
+  val searchQuery: StateFlow<String> = searchModel.currentTerm
 
   fun search(string: String = "") {
     viewModelScope.launch {

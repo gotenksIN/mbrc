@@ -77,10 +77,10 @@ fun LibraryScreen(
   val scope = rememberCoroutineScope()
 
   var isSearchActive by rememberSaveable { mutableStateOf(false) }
-  var searchQuery by rememberSaveable { mutableStateOf("") }
   var statsToShow by remember { mutableStateOf<LibraryStats?>(null) }
   var showSortSheet by rememberSaveable { mutableStateOf(false) }
 
+  val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val albumViewMode by albumViewModel.albumViewMode.collectAsStateWithLifecycle(
     initialValue = AlbumViewMode.AUTO
   )
@@ -97,6 +97,12 @@ fun LibraryScreen(
   )
 
   val pagerState = rememberPagerState(pageCount = { LibraryTab.entries.size })
+
+  LaunchedEffect(searchQuery) {
+    if (searchQuery.isNotEmpty()) {
+      isSearchActive = true
+    }
+  }
 
   // String resources for menu items and scaffold configuration
   val searchPlaceholder = stringResource(R.string.library_search_hint)
@@ -115,16 +121,12 @@ fun LibraryScreen(
     isSearchActive -> TopBarState.Search(
       query = searchQuery,
       placeholder = searchPlaceholder,
-      onQueryChange = { query ->
-        searchQuery = query
-        viewModel.search(query)
-      },
+      onQueryChange = viewModel::search,
       onSearch = {
         // Library search filters in real-time, no action needed on submit
       },
       onClose = {
         isSearchActive = false
-        searchQuery = ""
         viewModel.search("")
       }
     )
