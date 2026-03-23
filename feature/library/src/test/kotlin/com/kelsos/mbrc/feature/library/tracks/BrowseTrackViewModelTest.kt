@@ -69,6 +69,7 @@ class BrowseTrackViewModelTest : KoinTest {
 
     // Setup default mocks
     every { searchModel.term } returns searchTermFlow
+    every { searchModel.currentTerm } returns searchTermFlow
     every { repository.getAll() } returns flowOf(PagingData.empty())
     every { repository.getAll(any(), any()) } returns flowOf(PagingData.empty())
     every { repository.search(any()) } returns flowOf(PagingData.empty())
@@ -222,6 +223,43 @@ class BrowseTrackViewModelTest : KoinTest {
 
       // Verify queue handler was called with default action
       coVerify(exactly = 1) { queueHandler.queueTrack(track = track, type = Queue.Last) }
+    }
+  }
+
+  @Test
+  fun queueShouldUseFullLibraryContextWhenSearchIsActive() {
+    runTest(testDispatcher) {
+      every { librarySettings.libraryTrackDefaultActionFlow } returns flowOf(TrackAction.PlayNowQueueAll)
+      val track =
+        Track(
+          id = 1,
+          artist = "Test Artist",
+          title = "Test Track",
+          album = "Test Album",
+          year = "2023",
+          genre = "Rock",
+          disc = 1,
+          trackno = 1,
+          src = "",
+          albumArtist = "Test Artist"
+        )
+      val queueResult = Outcome.Success(10)
+
+      coEvery {
+        queueHandler.queueTrack(track = track, type = Queue.AddAll, queueFullLibrary = true)
+      } returns queueResult
+
+      viewModel.events.test {
+        viewModel.queue(Queue.Default, track, queueFullLibrary = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(TrackUiMessage.QueueSuccess(10))
+      }
+
+      coVerify(exactly = 1) {
+        queueHandler.queueTrack(track = track, type = Queue.AddAll, queueFullLibrary = true)
+      }
     }
   }
 
