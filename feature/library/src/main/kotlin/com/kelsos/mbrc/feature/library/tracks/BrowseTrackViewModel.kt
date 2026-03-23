@@ -11,6 +11,7 @@ import com.kelsos.mbrc.feature.library.domain.LibrarySyncUseCase
 import com.kelsos.mbrc.feature.library.queue.QueueHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -25,7 +26,7 @@ class BrowseTrackViewModel(
   private val librarySettings: LibrarySettings,
   connectionStateFlow: ConnectionStateFlow
 ) : BaseTrackViewModel(queueHandler, librarySettings, connectionStateFlow) {
-
+  val searchQuery: StateFlow<String> = searchModel.currentTerm
   val sortPreference: Flow<TrackSortPreference> = librarySettings.trackSortPreferenceFlow
 
   override val tracks =

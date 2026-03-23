@@ -135,6 +135,43 @@ class AlbumTracksViewModelTest : KoinTest {
   }
 
   @Test
+  fun queueShouldUseAlbumContextWhenRequested() {
+    runTest(testDispatcher) {
+      coEvery { connectionStateFlow.isConnected } returns true
+      every { librarySettings.libraryTrackDefaultActionFlow } returns flowOf(TrackAction.PlayNowQueueAll)
+      val track =
+        Track(
+          id = 1,
+          artist = "Test Artist",
+          title = "Test Track",
+          album = "Test Album",
+          year = "2023",
+          genre = "Rock",
+          disc = 1,
+          trackno = 1,
+          src = "",
+          albumArtist = "Test Artist"
+        )
+      val queueResult = Outcome.Success(10)
+      coEvery {
+        queueHandler.queueTrack(track = track, type = Queue.AddAll, queueAlbum = true)
+      } returns queueResult
+
+      viewModel.events.test {
+        viewModel.queue(Queue.Default, track, queueAlbum = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = awaitItem()
+        assertThat(event).isEqualTo(TrackUiMessage.QueueSuccess(10))
+      }
+
+      coVerify(exactly = 1) {
+        queueHandler.queueTrack(track = track, type = Queue.AddAll, queueAlbum = true)
+      }
+    }
+  }
+
+  @Test
   fun queueAlbumShouldEmitNetworkUnavailableWhenNotConnected() {
     runTest(testDispatcher) {
       // Given

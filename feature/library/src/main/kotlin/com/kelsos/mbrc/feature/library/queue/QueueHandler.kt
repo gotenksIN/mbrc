@@ -91,7 +91,12 @@ class QueueHandler(
     AppError.NetworkUnavailable.asFailure()
   }
 
-  suspend fun queueTrack(track: Track, type: Queue, queueAlbum: Boolean = false): Outcome<Int> {
+  suspend fun queueTrack(
+    track: Track,
+    type: Queue,
+    queueAlbum: Boolean = false,
+    queueFullLibrary: Boolean = false
+  ): Outcome<Int> {
     val trackSource: List<String>
     val path: String?
     var action = type
@@ -135,6 +140,6 @@ class QueueHandler(
   suspend fun queueTrack(track: Track, queueAlbum: Boolean = false): Outcome<Int> = queueTrack(
     track,
     Queue.fromTrackAction(settings.libraryTrackDefaultActionFlow.first()),
-    queueAlbum
+    queueAlbum = queueAlbum
   )
 }

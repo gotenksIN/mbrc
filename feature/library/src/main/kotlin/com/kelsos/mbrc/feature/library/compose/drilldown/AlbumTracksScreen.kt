@@ -132,8 +132,20 @@ fun AlbumTracksScreen(
               tracks[index]?.let { track ->
                 TrackListItem(
                   track = track,
-                  onClick = { viewModel.queue(Queue.Default, track) },
-                  onQueue = { queue -> viewModel.queue(queue, track) },
+                  onClick = {
+                    viewModel.queue(
+                      Queue.Default,
+                      track,
+                      queueAlbum = albumInfo.album.isNotEmpty()
+                    )
+                  },
+                  onQueue = { queue ->
+                    viewModel.queue(
+                      queue,
+                      track,
+                      queueAlbum = albumInfo.album.isNotEmpty()
+                    )
+                  },
                   showCover = false,
                   showAlbum = false
                 )

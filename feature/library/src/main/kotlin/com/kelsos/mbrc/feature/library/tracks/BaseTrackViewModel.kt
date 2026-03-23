@@ -18,7 +18,12 @@ abstract class BaseTrackViewModel(
 ) : BaseLibraryViewModel<TrackUiMessage>(librarySettings, connectionStateFlow) {
   abstract val tracks: Flow<PagingData<Track>>
 
-  fun queue(action: Queue, track: Track) {
+  fun queue(
+    action: Queue,
+    track: Track,
+    queueAlbum: Boolean = false,
+    queueFullLibrary: Boolean = false
+  ) {
     viewModelScope.launch {
       if (!checkConnection()) {
         emit(TrackUiMessage.NetworkUnavailable)
@@ -26,7 +31,12 @@ abstract class BaseTrackViewModel(
       }
 
       val queueAction = getQueueAction(action)
-      val result = queueHandler.queueTrack(track = track, type = queueAction)
+      val result = queueHandler.queueTrack(
+        track = track,
+        type = queueAction,
+        queueAlbum = queueAlbum,
+        queueFullLibrary = queueFullLibrary
+      )
 
       val message =
         if (result.isSuccess) {
