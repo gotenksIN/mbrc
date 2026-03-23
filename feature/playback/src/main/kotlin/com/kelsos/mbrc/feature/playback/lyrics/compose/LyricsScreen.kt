@@ -17,7 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -31,6 +32,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -91,6 +93,19 @@ fun LyricsScreenContent(
   onPlayPauseClick: () -> Unit,
   onSeek: (Float) -> Unit
 ) {
+  val lyricTimestamps = remember(lyrics) { lyrics.map(::leadingTimestampMs) }
+  val hasSyncedLyrics = remember(lyricTimestamps) { lyricTimestamps.any { it != null } }
+  val activeLineIndex = remember(lyricTimestamps, playingPosition.current) {
+    findActiveLyricIndex(lyricTimestamps, playingPosition.current)
+  }
+  val listState = rememberLazyListState()
+
+  LaunchedEffect(activeLineIndex, hasSyncedLyrics) {
+    if (hasSyncedLyrics && activeLineIndex >= 0) {
+      listState.animateScrollToItem(index = maxOf(activeLineIndex - 2, 0))
+    }
+  }
+
   Column(
     modifier = modifier
       .fillMaxSize()
@@ -120,12 +135,16 @@ fun LyricsScreenContent(
         )
       } else {
         LazyColumn(
+          state = listState,
           modifier = Modifier.fillMaxSize(),
           contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
           verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-          items(lyrics) { line ->
-            LyricsLine(text = line)
+          itemsIndexed(lyrics) { index, line ->
+            LyricsLine(
+              text = line,
+              isActive = index == activeLineIndex
+            )
           }
         }
       }
@@ -203,7 +222,11 @@ private fun LyricsHeader(
 }
 
 @Composable
-private fun LyricsLine(text: String, modifier: Modifier = Modifier) {
+private fun LyricsLine(
+  text: String,
+  isActive: Boolean,
+  modifier: Modifier = Modifier
+) {
   if (text.isBlank()) {
     // Spacer for empty lines (verse breaks)
     Spacer(modifier = modifier.height(16.dp))
@@ -211,15 +234,46 @@ private fun LyricsLine(text: String, modifier: Modifier = Modifier) {
     Text(
       text = text,
       style = MaterialTheme.typography.headlineSmall.copy(
-        fontWeight = FontWeight.Bold,
+        fontWeight = if (isActive) FontWeight.Black else FontWeight.Bold,
         lineHeight = 32.sp
       ),
-      color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.95f),
+      color = if (isActive) {
+        MaterialTheme.colorScheme.onPrimary
+      } else {
+        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+      },
       modifier = modifier
         .fillMaxWidth()
         .padding(vertical = 4.dp)
     )
   }
+}
+
+private val leadingTimestampRegex = Regex("""^\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?]""")
+
+private fun leadingTimestampMs(line: String): Long? {
+  val match = leadingTimestampRegex.find(line) ?: return null
+  val minutes = match.groups[1]?.value?.toLongOrNull() ?: return null
+  val seconds = match.groups[2]?.value?.toLongOrNull() ?: return null
+  val fraction = match.groups[3]?.value.orEmpty()
+  val millis = when (fraction.length) {
+    0 -> 0L
+    1 -> fraction.toLong() * 100L
+    2 -> fraction.toLong() * 10L
+    else -> fraction.take(3).toLong()
+  }
+
+  return minutes * 60_000L + seconds * 1_000L + millis
+}
+
+private fun findActiveLyricIndex(timestamps: List<Long?>, positionMs: Long): Int {
+  var activeIndex = -1
+  timestamps.forEachIndexed { index, timestamp ->
+    if (timestamp != null && timestamp <= positionMs) {
+      activeIndex = index
+    }
+  }
+  return activeIndex
 }
 
 @Composable
