@@ -3,6 +3,8 @@ package com.kelsos.mbrc.feature.library
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -10,6 +12,7 @@ private const val SEARCH_DEBOUNCE_MS = 300L
 
 class LibrarySearchModel {
   private val _term: MutableStateFlow<String> = MutableStateFlow("")
+  val currentTerm: StateFlow<String> = _term.asStateFlow()
 
   /**
    * Emits the search term with debouncing for user input.
