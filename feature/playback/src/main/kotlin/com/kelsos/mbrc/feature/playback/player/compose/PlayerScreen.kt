@@ -2,12 +2,8 @@ package com.kelsos.mbrc.feature.playback.player.compose
 
 import android.content.res.Configuration
 import android.graphics.Bitmap
-import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -26,10 +23,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Favorite
@@ -54,6 +55,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -61,20 +64,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.palette.graphics.Palette
 import coil3.compose.AsyncImagePainter
@@ -86,6 +95,7 @@ import coil3.toBitmap
 import com.kelsos.mbrc.core.common.state.LfmRating
 import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.state.PlayingPosition
+import com.kelsos.mbrc.core.common.state.PlayerScreenVisibilityTracker
 import com.kelsos.mbrc.core.common.state.Repeat
 import com.kelsos.mbrc.core.common.state.ShuffleMode
 import com.kelsos.mbrc.core.common.state.TrackInfo
@@ -98,7 +108,6 @@ import com.kelsos.mbrc.core.ui.compose.WaveProgressIndicator
 import com.kelsos.mbrc.feature.misc.output.compose.OutputSelectionBottomSheet
 import com.kelsos.mbrc.feature.playback.R
 import com.kelsos.mbrc.feature.playback.lyrics.LyricsViewModel
-import com.kelsos.mbrc.feature.playback.lyrics.compose.LyricsScreenContent
 import com.kelsos.mbrc.feature.playback.player.IPlayerActions
 import com.kelsos.mbrc.feature.playback.player.PlaybackState
 import com.kelsos.mbrc.feature.playback.player.PlayerViewModel
@@ -106,6 +115,7 @@ import com.kelsos.mbrc.feature.playback.player.VolumeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun PlayerScreen(
@@ -126,34 +136,28 @@ fun PlayerScreen(
   val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
   val isScrobbling by viewModel.isScrobbling.collectAsStateWithLifecycle()
   val trackDetails by viewModel.trackDetails.collectAsStateWithLifecycle()
-  val showRatingOnPlayer by viewModel.showRatingOnPlayer.collectAsStateWithLifecycle()
+  val playerScreenVisibilityTracker: PlayerScreenVisibilityTracker = koinInject()
 
   // Lyrics state
   val lyrics by lyricsViewModel.lyrics.collectAsStateWithLifecycle(initialValue = emptyList())
-  val lyricsPlayingTrack by lyricsViewModel.playingTrack.collectAsStateWithLifecycle()
-  val lyricsPlayingPosition by lyricsViewModel.playingPosition.collectAsStateWithLifecycle()
-  val isPlaying by lyricsViewModel.isPlaying.collectAsStateWithLifecycle()
 
   var showBottomSheet by remember { mutableStateOf(false) }
   var showOutputSelection by remember { mutableStateOf(false) }
   var showLyrics by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
 
+  DisposableEffect(Unit) {
+    playerScreenVisibilityTracker.isVisible = true
+    onDispose {
+      playerScreenVisibilityTracker.isVisible = false
+    }
+  }
+
   val title = stringResource(R.string.nav_now_playing)
 
-  // Handle back press to close lyrics overlay
-  BackHandler(enabled = showLyrics) {
-    showLyrics = false
-  }
-
   // Compute scaffold configuration based on current state
-  val topBarState = if (showLyrics) TopBarState.Hidden else TopBarState.WithTitle(title)
-  // 3-dot menu opens bottom sheet directly (only when not showing lyrics)
-  val onOverflowClick: (() -> Unit)? = if (showLyrics) {
-    null
-  } else {
-    { showBottomSheet = true }
-  }
+  val topBarState = TopBarState.WithTitle(title)
+  val onOverflowClick: (() -> Unit)? = { showBottomSheet = true }
 
   if (showBottomSheet) {
     PlayerBottomSheet(
@@ -193,47 +197,27 @@ fun PlayerScreen(
     modifier = modifier
   ) { paddingValues ->
     // Ignore padding for player screen as it uses transparent top bar
-    Box(modifier = Modifier.fillMaxSize()) {
-      PlayerScreenContent(
-        playingTrack = playingTrack,
-        playingPosition = playingPosition,
-        trackRating = trackRating,
-        volumeState = volumeState,
-        playbackState = playbackState,
-        actions = viewModel.actions,
-        hasLyrics = lyrics.isNotEmpty(),
-        showRatingOnPlayer = showRatingOnPlayer,
-        onTrackInfoClick = onNavigateToNowPlaying,
-        onLyricsClick = { showLyrics = true },
-        onOutputClick = { showOutputSelection = true },
-        onRatingClick = { showBottomSheet = true }
-      )
-
-      // Lyrics overlay with slide animation from bottom
-      AnimatedVisibility(
-        visible = showLyrics,
-        enter = slideInVertically(
-          initialOffsetY = { fullHeight -> fullHeight },
-          animationSpec = tween(durationMillis = 300)
-        ),
-        exit = slideOutVertically(
-          targetOffsetY = { fullHeight -> fullHeight },
-          animationSpec = tween(durationMillis = 300)
-        )
-      ) {
-        LyricsScreenContent(
-          lyrics = lyrics,
-          playingTrack = lyricsPlayingTrack,
-          playingPosition = lyricsPlayingPosition,
-          composer = trackDetails.composer,
-          isPlaying = isPlaying,
-          onCollapse = { showLyrics = false },
-          onPlayPauseClick = lyricsViewModel::playPause,
-          onSeek = { lyricsViewModel.seek(it.toInt()) },
-          modifier = Modifier.fillMaxSize()
-        )
-      }
-    }
+    PlayerScreenContent(
+      playingTrack = playingTrack,
+      playingPosition = playingPosition,
+      trackRating = trackRating,
+      volumeState = volumeState,
+      playbackState = playbackState,
+      actions = viewModel.actions,
+      lyrics = lyrics,
+      showLyrics = showLyrics,
+      hasLyrics = lyrics.isNotEmpty(),
+      showRatingOnPlayer = false,
+      onTrackInfoClick = onNavigateToNowPlaying,
+      onLyricsClick = {
+        if (lyrics.isNotEmpty()) {
+          showLyrics = !showLyrics
+        }
+      },
+      onOutputClick = { showOutputSelection = true },
+      onRatingClick = { showBottomSheet = true },
+      contentPadding = paddingValues
+    )
   }
 }
 
@@ -245,12 +229,15 @@ fun PlayerScreenContent(
   volumeState: VolumeState,
   playbackState: PlaybackState,
   actions: IPlayerActions,
+  lyrics: List<String>,
+  showLyrics: Boolean,
   hasLyrics: Boolean,
   showRatingOnPlayer: Boolean,
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onRatingClick: () -> Unit,
+  contentPadding: PaddingValues = PaddingValues(),
   modifier: Modifier = Modifier
 ) {
   val configuration = LocalConfiguration.current
@@ -287,67 +274,91 @@ fun PlayerScreenContent(
 
   val isFavorite = trackRating.lfmRating == LfmRating.Loved
   val isBanned = trackRating.lfmRating == LfmRating.Banned
+  val topInset = contentPadding.calculateTopPadding()
+  val bottomInset = contentPadding.calculateBottomPadding()
+  val playerUiColors = remember(albumArtState.colors.dominant) {
+    playerUiColorsFor(albumArtState.colors.dominant)
+  }
 
-  BoxWithConstraints(modifier = modifier) {
-    val isTablet = maxWidth >= PlayerConstants.TABLET_WIDTH_THRESHOLD
-
-    when {
-      isLandscape -> LandscapePlayerLayout(
+  CompositionLocalProvider(LocalPlayerUiColors provides playerUiColors) {
+    BoxWithConstraints(modifier = modifier) {
+      val isTablet = maxWidth >= PlayerConstants.TABLET_WIDTH_THRESHOLD
+      BlurredPlayerBackdrop(
         painter = albumArtState.painter,
-        playingTrack = playingTrack,
-        playingPosition = playingPosition,
-        isFavorite = isFavorite,
-        isBanned = isBanned,
-        hasLyrics = hasLyrics,
-        rating = trackRating.rating,
-        showRating = showRatingOnPlayer,
-        volumeState = volumeState,
-        playbackState = playbackState,
         gradientBrush = gradientBrush,
-        actions = actions,
-        onTrackInfoClick = onTrackInfoClick,
-        onLyricsClick = onLyricsClick,
-        onOutputClick = onOutputClick,
-        onRatingClick = onRatingClick
+        modifier = Modifier.fillMaxSize()
       )
 
-      isTablet -> TabletPlayerLayout(
-        painter = albumArtState.painter,
-        playingTrack = playingTrack,
-        playingPosition = playingPosition,
-        isFavorite = isFavorite,
-        isBanned = isBanned,
-        hasLyrics = hasLyrics,
-        rating = trackRating.rating,
-        showRating = showRatingOnPlayer,
-        volumeState = volumeState,
-        playbackState = playbackState,
-        gradientBrush = gradientBrush,
-        actions = actions,
-        onTrackInfoClick = onTrackInfoClick,
-        onLyricsClick = onLyricsClick,
-        onOutputClick = onOutputClick,
-        onRatingClick = onRatingClick
-      )
+      when {
+        isLandscape -> LandscapePlayerLayout(
+          painter = albumArtState.painter,
+          playingTrack = playingTrack,
+          playingPosition = playingPosition,
+          lyrics = lyrics,
+          showLyrics = showLyrics,
+          isFavorite = isFavorite,
+          isBanned = isBanned,
+          hasLyrics = hasLyrics,
+          rating = trackRating.rating,
+          showRating = showRatingOnPlayer,
+          volumeState = volumeState,
+          playbackState = playbackState,
+          gradientBrush = gradientBrush,
+          topInset = topInset,
+          bottomInset = bottomInset,
+          actions = actions,
+          onTrackInfoClick = onTrackInfoClick,
+          onLyricsClick = onLyricsClick,
+          onOutputClick = onOutputClick,
+          onRatingClick = onRatingClick
+        )
 
-      else -> PortraitPlayerLayout(
-        painter = albumArtState.painter,
-        playingTrack = playingTrack,
-        playingPosition = playingPosition,
-        isFavorite = isFavorite,
-        isBanned = isBanned,
-        hasLyrics = hasLyrics,
-        rating = trackRating.rating,
-        showRating = showRatingOnPlayer,
-        volumeState = volumeState,
-        playbackState = playbackState,
-        gradientBrush = gradientBrush,
-        actions = actions,
-        onTrackInfoClick = onTrackInfoClick,
-        onLyricsClick = onLyricsClick,
-        onOutputClick = onOutputClick,
-        onRatingClick = onRatingClick
-      )
+        isTablet -> TabletPlayerLayout(
+          painter = albumArtState.painter,
+          playingTrack = playingTrack,
+          playingPosition = playingPosition,
+          lyrics = lyrics,
+          showLyrics = showLyrics,
+          isFavorite = isFavorite,
+          isBanned = isBanned,
+          hasLyrics = hasLyrics,
+          rating = trackRating.rating,
+          showRating = showRatingOnPlayer,
+          volumeState = volumeState,
+          playbackState = playbackState,
+          gradientBrush = gradientBrush,
+          topInset = topInset,
+          bottomInset = bottomInset,
+          actions = actions,
+          onTrackInfoClick = onTrackInfoClick,
+          onLyricsClick = onLyricsClick,
+          onOutputClick = onOutputClick,
+          onRatingClick = onRatingClick
+        )
+
+        else -> PortraitPlayerLayout(
+          painter = albumArtState.painter,
+          playingTrack = playingTrack,
+          playingPosition = playingPosition,
+          lyrics = lyrics,
+          showLyrics = showLyrics,
+          isFavorite = isFavorite,
+          isBanned = isBanned,
+          hasLyrics = hasLyrics,
+          rating = trackRating.rating,
+          showRating = showRatingOnPlayer,
+          volumeState = volumeState,
+          playbackState = playbackState,
+          gradientBrush = gradientBrush,
+          topInset = topInset,
+          bottomInset = bottomInset,
+          actions = actions,
+          onTrackInfoClick = onTrackInfoClick,
+          onLyricsClick = onLyricsClick,
+          onOutputClick = onOutputClick,
+          onRatingClick = onRatingClick
+        )
+      }
     }
   }
 }
@@ -356,13 +367,20 @@ fun PlayerScreenContent(
  * Constants for player layout dimensions and values.
  */
 private object PlayerConstants {
-  const val PORTRAIT_TOP_SPACER_WEIGHT = 0.5f
   const val LANDSCAPE_ALBUM_HEIGHT_FRACTION = 0.85f
   const val VOLUME_MAX = 100f
   const val SLIDER_DEBOUNCE_MS = 1000L
   val TABLET_WIDTH_THRESHOLD = 600.dp
   val TOP_BAR_HEIGHT = 64.dp // Padding for transparent top bar
   val CONTENT_PADDING = 24.dp
+  val BLUR_RADIUS = 72.dp
+  val PLAYER_SURFACE_SCRIM = Color.Black.copy(alpha = 0.48f)
+  val PLAYER_SURFACE_FADE = Color.Black.copy(alpha = 0.72f)
+  val PRIMARY_FOREGROUND = Color.White
+  val SECONDARY_FOREGROUND = Color.White.copy(alpha = 0.72f)
+  val MUTED_FOREGROUND = Color.White.copy(alpha = 0.52f)
+  val DISABLED_FOREGROUND = Color.White.copy(alpha = 0.35f)
+  val LYRICS_PANEL_SCRIM = Color.Black.copy(alpha = 0.22f)
 }
 
 /**
@@ -374,6 +392,51 @@ private data class AlbumColors(
   val darkVibrant: Color,
   val backgroundColor: Color
 )
+
+private data class PlayerUiColors(
+  val surfaceScrim: Color,
+  val surfaceFade: Color,
+  val primaryForeground: Color,
+  val secondaryForeground: Color,
+  val mutedForeground: Color,
+  val disabledForeground: Color,
+  val lyricsPanelScrim: Color,
+  val playButtonContainer: Color,
+  val playButtonContent: Color
+)
+
+private val LocalPlayerUiColors = staticCompositionLocalOf { playerUiColorsFor(Color.Black) }
+
+private fun playerUiColorsFor(baseColor: Color): PlayerUiColors {
+  val useDarkForeground = baseColor.luminance() > 0.55f
+  val baseForeground = if (useDarkForeground) Color(0xFF111111) else Color.White
+
+  return if (useDarkForeground) {
+    PlayerUiColors(
+      surfaceScrim = Color.White.copy(alpha = 0.18f),
+      surfaceFade = Color.White.copy(alpha = 0.42f),
+      primaryForeground = baseForeground,
+      secondaryForeground = baseForeground.copy(alpha = 0.78f),
+      mutedForeground = baseForeground.copy(alpha = 0.62f),
+      disabledForeground = baseForeground.copy(alpha = 0.40f),
+      lyricsPanelScrim = Color.White.copy(alpha = 0.24f),
+      playButtonContainer = Color(0xFF111111),
+      playButtonContent = Color.White
+    )
+  } else {
+    PlayerUiColors(
+      surfaceScrim = Color.Black.copy(alpha = 0.48f),
+      surfaceFade = Color.Black.copy(alpha = 0.72f),
+      primaryForeground = baseForeground,
+      secondaryForeground = baseForeground.copy(alpha = 0.72f),
+      mutedForeground = baseForeground.copy(alpha = 0.52f),
+      disabledForeground = baseForeground.copy(alpha = 0.35f),
+      lyricsPanelScrim = Color.Black.copy(alpha = 0.22f),
+      playButtonContainer = Color.White,
+      playButtonContent = Color.Black
+    )
+  }
+}
 
 /**
  * Data class to hold album art state including painter and extracted colors.
@@ -481,10 +544,145 @@ private fun extractColorsFromBitmap(
 }
 
 @Composable
+private fun BlurredPlayerBackdrop(
+  painter: AsyncImagePainter,
+  gradientBrush: Brush,
+  modifier: Modifier = Modifier
+) {
+  val uiColors = LocalPlayerUiColors.current
+  val painterState by painter.state.collectAsStateWithLifecycle()
+  val placeholderPainter = painterResource(CoreUiR.drawable.ic_image_no_cover)
+  val activePainter = when (painterState) {
+    is AsyncImagePainter.State.Success -> painter
+    is AsyncImagePainter.State.Error -> placeholderPainter
+    else -> placeholderPainter
+  }
+
+  Box(modifier = modifier) {
+    Image(
+      painter = activePainter,
+      contentDescription = null,
+      contentScale = ContentScale.Crop,
+      modifier = Modifier
+        .fillMaxSize()
+        .graphicsLayer {
+          scaleX = 1.18f
+          scaleY = 1.18f
+        }
+        .blur(PlayerConstants.BLUR_RADIUS)
+    )
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .background(gradientBrush)
+    )
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .background(
+          Brush.verticalGradient(
+            colors = listOf(
+              uiColors.surfaceScrim,
+              uiColors.surfaceFade
+            )
+          )
+        )
+    )
+  }
+}
+
+@Composable
+private fun CoverOrLyricsPanel(
+  painter: AsyncImagePainter,
+  lyrics: List<String>,
+  playingPosition: PlayingPosition,
+  showLyrics: Boolean,
+  modifier: Modifier = Modifier
+) {
+  if (showLyrics && lyrics.isNotEmpty()) {
+    ReplaceCoverLyricsPanel(
+      lyrics = lyrics,
+      playingPosition = playingPosition,
+      modifier = modifier
+    )
+  } else {
+    AlbumCover(painter = painter, modifier = modifier)
+  }
+}
+
+@Composable
+private fun ReplaceCoverLyricsPanel(
+  lyrics: List<String>,
+  playingPosition: PlayingPosition,
+  modifier: Modifier = Modifier
+) {
+  val uiColors = LocalPlayerUiColors.current
+  val lyricTimestamps = remember(lyrics) { lyrics.map(::leadingTimestampMs) }
+  val activeLineIndex = remember(lyricTimestamps, playingPosition.current) {
+    findActiveLyricIndex(lyricTimestamps, playingPosition.current)
+  }
+  val listState = rememberLazyListState()
+
+  LaunchedEffect(activeLineIndex) {
+    if (activeLineIndex >= 0) {
+      listState.animateScrollToItem(maxOf(activeLineIndex - 2, 0))
+    }
+  }
+
+  Surface(
+    modifier = modifier,
+    color = uiColors.lyricsPanelScrim,
+    shape = MaterialTheme.shapes.large
+  ) {
+    if (lyrics.isEmpty()) {
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
+        Icon(
+          imageVector = Icons.Outlined.Lyrics,
+          contentDescription = null,
+          tint = uiColors.secondaryForeground,
+          modifier = Modifier.size(40.dp)
+        )
+      }
+    } else {
+      LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 48.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+      ) {
+        itemsIndexed(lyrics) { index, line ->
+          val displayText = line.removeLeadingTimestamp().trim()
+          if (displayText.isBlank()) {
+            Spacer(modifier = Modifier.height(18.dp))
+          } else {
+            Text(
+              text = displayText,
+              textAlign = TextAlign.Center,
+              style = if (index == activeLineIndex) {
+                MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black)
+              } else {
+                MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+              },
+              color = if (index == activeLineIndex) uiColors.primaryForeground else uiColors.disabledForeground,
+              modifier = Modifier.fillMaxWidth()
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
 private fun PortraitPlayerLayout(
   painter: AsyncImagePainter,
   playingTrack: TrackInfo,
   playingPosition: PlayingPosition,
+  lyrics: List<String>,
+  showLyrics: Boolean,
   isFavorite: Boolean,
   isBanned: Boolean,
   hasLyrics: Boolean,
@@ -493,6 +691,8 @@ private fun PortraitPlayerLayout(
   volumeState: VolumeState,
   playbackState: PlaybackState,
   gradientBrush: Brush,
+  topInset: androidx.compose.ui.unit.Dp,
+  bottomInset: androidx.compose.ui.unit.Dp,
   actions: IPlayerActions,
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
@@ -503,68 +703,50 @@ private fun PortraitPlayerLayout(
   Column(
     modifier = modifier
       .fillMaxSize()
-      .background(MaterialTheme.colorScheme.background)
-      .background(gradientBrush)
       .verticalScroll(rememberScrollState())
       .padding(
-        top = PlayerConstants.TOP_BAR_HEIGHT + PlayerConstants.CONTENT_PADDING,
-        bottom = 16.dp
+        top = topInset + 8.dp,
+        bottom = bottomInset + 20.dp
       ),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    Spacer(modifier = Modifier.weight(PlayerConstants.PORTRAIT_TOP_SPACER_WEIGHT))
-
-    // Album cover - same horizontal padding as text elements
-    AlbumCover(
-      painter = painter,
+    Box(
       modifier = Modifier
-        .padding(horizontal = PlayerConstants.CONTENT_PADDING)
+        .padding(horizontal = 18.dp)
         .fillMaxWidth()
         .aspectRatio(1f)
-    )
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    // Track info with favorite/ban buttons
-    TrackInfoWithFavorite(
-      track = playingTrack,
-      isFavorite = isFavorite,
-      isBanned = isBanned,
-      isStream = playingPosition.isStream,
-      hasLyrics = hasLyrics,
-      onTrackClick = onTrackInfoClick,
-      onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
-      onBanClick = { actions.toggleBan(isBanned, isFavorite) },
-      onLyricsClick = onLyricsClick,
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = PlayerConstants.CONTENT_PADDING)
-    )
-
-    // Rating display (optional)
-    if (showRating) {
-      Spacer(modifier = Modifier.height(12.dp))
-      RatingDisplay(
-        rating = rating,
-        onClick = onRatingClick,
-        modifier = Modifier.padding(horizontal = PlayerConstants.CONTENT_PADDING)
+    ) {
+      CoverOrLyricsPanel(
+        painter = painter,
+        lyrics = lyrics,
+        playingPosition = playingPosition,
+        showLyrics = showLyrics,
+        modifier = Modifier.fillMaxSize()
       )
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(22.dp))
 
-    // Progress bar
     ProgressSection(
       position = playingPosition,
       onSeek = actions.seek,
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = PlayerConstants.CONTENT_PADDING)
+        .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
-    // Playback controls
+    BlurTrackInfo(
+      track = playingTrack,
+      onTrackClick = onTrackInfoClick,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 28.dp)
+    )
+
+    Spacer(modifier = Modifier.height(28.dp))
+
     PlaybackControls(
       playbackState = playbackState,
       actions = actions
@@ -572,17 +754,26 @@ private fun PortraitPlayerLayout(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // Volume control - compact
     VolumeSection(
       volumeState = volumeState,
       actions = actions,
       onOutputClick = onOutputClick,
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = PlayerConstants.CONTENT_PADDING)
+        .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.weight(1f))
+    Spacer(modifier = Modifier.height(18.dp))
+
+    BlurPlayerActionDock(
+      onOutputClick = onOutputClick,
+      onQueueClick = onTrackInfoClick,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 24.dp)
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
   }
 }
 
@@ -591,6 +782,8 @@ private fun TabletPlayerLayout(
   painter: AsyncImagePainter,
   playingTrack: TrackInfo,
   playingPosition: PlayingPosition,
+  lyrics: List<String>,
+  showLyrics: Boolean,
   isFavorite: Boolean,
   isBanned: Boolean,
   hasLyrics: Boolean,
@@ -599,6 +792,8 @@ private fun TabletPlayerLayout(
   volumeState: VolumeState,
   playbackState: PlaybackState,
   gradientBrush: Brush,
+  topInset: androidx.compose.ui.unit.Dp,
+  bottomInset: androidx.compose.ui.unit.Dp,
   actions: IPlayerActions,
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
@@ -610,9 +805,10 @@ private fun TabletPlayerLayout(
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(MaterialTheme.colorScheme.background)
-      .background(gradientBrush)
-      .padding(top = PlayerConstants.TOP_BAR_HEIGHT + PlayerConstants.CONTENT_PADDING),
+      .padding(
+        top = topInset + PlayerConstants.CONTENT_PADDING,
+        bottom = bottomInset
+      ),
     contentAlignment = Alignment.Center
   ) {
     Column(
@@ -623,8 +819,11 @@ private fun TabletPlayerLayout(
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       // Album cover
-      AlbumCover(
+      CoverOrLyricsPanel(
         painter = painter,
+        lyrics = lyrics,
+        playingPosition = playingPosition,
+        showLyrics = showLyrics,
         modifier = Modifier
           .size(320.dp)
       )
@@ -644,15 +843,6 @@ private fun TabletPlayerLayout(
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
-
-      // Rating display (optional)
-      if (showRating) {
-        Spacer(modifier = Modifier.height(12.dp))
-        RatingDisplay(
-          rating = rating,
-          onClick = onRatingClick
-        )
-      }
 
       Spacer(modifier = Modifier.height(32.dp))
 
@@ -689,6 +879,8 @@ private fun LandscapePlayerLayout(
   painter: AsyncImagePainter,
   playingTrack: TrackInfo,
   playingPosition: PlayingPosition,
+  lyrics: List<String>,
+  showLyrics: Boolean,
   isFavorite: Boolean,
   isBanned: Boolean,
   hasLyrics: Boolean,
@@ -697,6 +889,8 @@ private fun LandscapePlayerLayout(
   volumeState: VolumeState,
   playbackState: PlaybackState,
   gradientBrush: Brush,
+  topInset: androidx.compose.ui.unit.Dp,
+  bottomInset: androidx.compose.ui.unit.Dp,
   actions: IPlayerActions,
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
@@ -707,13 +901,11 @@ private fun LandscapePlayerLayout(
   Row(
     modifier = modifier
       .fillMaxSize()
-      .background(MaterialTheme.colorScheme.background)
-      .background(gradientBrush)
       .padding(
-        top = PlayerConstants.TOP_BAR_HEIGHT + PlayerConstants.CONTENT_PADDING,
+        top = topInset + PlayerConstants.CONTENT_PADDING,
         start = PlayerConstants.CONTENT_PADDING,
         end = PlayerConstants.CONTENT_PADDING,
-        bottom = PlayerConstants.CONTENT_PADDING
+        bottom = bottomInset + PlayerConstants.CONTENT_PADDING
       ),
     horizontalArrangement = Arrangement.spacedBy(32.dp),
     verticalAlignment = Alignment.CenterVertically
@@ -723,8 +915,11 @@ private fun LandscapePlayerLayout(
       modifier = Modifier.weight(1f),
       contentAlignment = Alignment.Center
     ) {
-      AlbumCover(
+      CoverOrLyricsPanel(
         painter = painter,
+        lyrics = lyrics,
+        playingPosition = playingPosition,
+        showLyrics = showLyrics,
         modifier = Modifier
           .fillMaxHeight(PlayerConstants.LANDSCAPE_ALBUM_HEIGHT_FRACTION)
           .aspectRatio(1f)
@@ -752,15 +947,6 @@ private fun LandscapePlayerLayout(
         onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
-
-      // Rating display (optional)
-      if (showRating) {
-        Spacer(modifier = Modifier.height(12.dp))
-        RatingDisplay(
-          rating = rating,
-          onClick = onRatingClick
-        )
-      }
 
       Spacer(modifier = Modifier.height(24.dp))
 
@@ -836,6 +1022,7 @@ private fun TrackInfoWithFavorite(
   onLyricsClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val uiColors = LocalPlayerUiColors.current
   Row(
     modifier = modifier,
     verticalAlignment = Alignment.CenterVertically
@@ -844,15 +1031,17 @@ private fun TrackInfoWithFavorite(
     Column(
       modifier = Modifier
         .weight(1f)
-        .clickable(onClick = onTrackClick)
+        .clickable(onClick = onTrackClick),
+      horizontalAlignment = Alignment.CenterHorizontally
     ) {
       Text(
         text = track.title.ifEmpty { stringResource(R.string.unknown_title) },
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = uiColors.primaryForeground,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
         modifier = Modifier.height(28.dp)
       )
 
@@ -861,30 +1050,28 @@ private fun TrackInfoWithFavorite(
       Text(
         text = track.artist.ifEmpty { stringResource(R.string.unknown_artist) },
         style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = uiColors.secondaryForeground,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
         modifier = Modifier.height(22.dp)
       )
 
       Spacer(modifier = Modifier.height(2.dp))
 
-      // Album with year - always shown with fixed height
+      // Album - always shown with fixed height
       val albumText = if (track.album.isNotEmpty()) {
-        if (track.year.isNotEmpty()) {
-          "${track.album} • ${track.year}"
-        } else {
-          track.album
-        }
+        track.album
       } else {
         " " // Space to maintain height
       }
       Text(
         text = albumText,
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+        color = uiColors.mutedForeground,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
         modifier = Modifier.height(20.dp)
       )
     }
@@ -894,52 +1081,107 @@ private fun TrackInfoWithFavorite(
       Icon(
         imageVector = Icons.Outlined.Lyrics,
         contentDescription = stringResource(R.string.nav_lyrics),
-        tint = if (hasLyrics) {
-          MaterialTheme.colorScheme.primary
-        } else {
-          MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        tint = if (hasLyrics) uiColors.primaryForeground else uiColors.mutedForeground,
         modifier = Modifier.size(24.dp)
       )
     }
+  }
+}
 
-    // Ban button - disabled for streams (LFM rating not applicable)
-    IconButton(
-      onClick = onBanClick,
-      enabled = !isStream
-    ) {
-      Icon(
-        imageVector = Icons.Default.ThumbDown,
-        contentDescription = stringResource(R.string.player_lfm_ban),
-        tint = when {
-          isStream -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-          isBanned -> MaterialTheme.colorScheme.error
-          else -> MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        modifier = Modifier.size(24.dp)
-      )
+@Composable
+private fun BlurTrackInfo(
+  track: TrackInfo,
+  onTrackClick: () -> Unit,
+  modifier: Modifier = Modifier
+) {
+  val uiColors = LocalPlayerUiColors.current
+  Column(
+    modifier = modifier.clickable(onClick = onTrackClick),
+    horizontalAlignment = Alignment.CenterHorizontally
+  ) {
+    Text(
+      text = track.title.ifEmpty { stringResource(R.string.unknown_title) },
+      style = MaterialTheme.typography.headlineSmall,
+      fontWeight = FontWeight.Bold,
+      color = uiColors.primaryForeground,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      textAlign = TextAlign.Center
+    )
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    val subtitle = buildString {
+      val artist = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
+      append(artist)
+
+      if (track.album.isNotEmpty()) {
+        append(" • ")
+        append(track.album)
+      }
     }
 
-    // Favorite button - disabled for streams (LFM rating not applicable)
-    IconButton(
-      onClick = onFavoriteClick,
-      enabled = !isStream
-    ) {
-      Icon(
-        imageVector = if (isFavorite) {
-          Icons.Default.Favorite
-        } else {
-          Icons.Default.FavoriteBorder
-        },
-        contentDescription = stringResource(R.string.player_lfm_love),
-        tint = when {
-          isStream -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-          isFavorite -> MaterialTheme.colorScheme.primary
-          else -> MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        modifier = Modifier.size(28.dp)
-      )
-    }
+    Text(
+      text = subtitle,
+      style = MaterialTheme.typography.bodyLarge,
+      color = uiColors.secondaryForeground,
+      maxLines = 2,
+      overflow = TextOverflow.Ellipsis,
+      textAlign = TextAlign.Center
+    )
+  }
+}
+
+@Composable
+private fun BlurPlayerActionDock(
+  onOutputClick: () -> Unit,
+  onQueueClick: () -> Unit,
+  modifier: Modifier = Modifier
+) {
+  Row(
+    modifier = modifier,
+    horizontalArrangement = Arrangement.SpaceEvenly,
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    BlurDockItem(
+      icon = Icons.Default.SpeakerGroup,
+      label = "Output",
+      contentDescription = stringResource(R.string.output_selection_title),
+      onClick = onOutputClick
+    )
+    BlurDockItem(
+      icon = Icons.AutoMirrored.Filled.QueueMusic,
+      label = "Queue",
+      contentDescription = stringResource(R.string.nav_queue),
+      onClick = onQueueClick
+    )
+  }
+}
+
+@Composable
+private fun BlurDockItem(
+  icon: androidx.compose.ui.graphics.vector.ImageVector,
+  label: String,
+  contentDescription: String,
+  onClick: () -> Unit
+) {
+  val uiColors = LocalPlayerUiColors.current
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier.clickable(onClick = onClick)
+  ) {
+    Icon(
+      imageVector = icon,
+      contentDescription = contentDescription,
+      tint = uiColors.secondaryForeground,
+      modifier = Modifier.size(22.dp)
+    )
+    Spacer(modifier = Modifier.height(6.dp))
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelMedium,
+      color = uiColors.secondaryForeground
+    )
   }
 }
 
@@ -949,6 +1191,7 @@ private fun ProgressSection(
   onSeek: (Int) -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val uiColors = LocalPlayerUiColors.current
   var sliderPosition by remember { mutableFloatStateOf(0f) }
   var isUserSeeking by remember { mutableStateOf(false) }
   var ignoreServerUpdates by remember { mutableStateOf(false) }
@@ -969,8 +1212,8 @@ private fun ProgressSection(
       // For streams, show a wiggly wave indicator (not seekable)
       WaveProgressIndicator(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.onSurface,
-        backgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        color = uiColors.primaryForeground,
+        backgroundColor = uiColors.disabledForeground
       )
     } else {
       ThinSlider(
@@ -989,9 +1232,9 @@ private fun ProgressSection(
             ignoreServerUpdates = false
           }
         },
-        trackColor = MaterialTheme.colorScheme.onSurface,
-        inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-        thumbColor = MaterialTheme.colorScheme.onSurface,
+        trackColor = uiColors.primaryForeground,
+        inactiveTrackColor = uiColors.disabledForeground,
+        thumbColor = uiColors.primaryForeground,
         modifier = Modifier.fillMaxWidth()
       )
     }
@@ -1005,12 +1248,12 @@ private fun ProgressSection(
       Text(
         text = position.currentMinutes,
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = uiColors.secondaryForeground
       )
       Text(
         text = position.totalMinutes,
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = uiColors.secondaryForeground
       )
     }
   }
@@ -1023,6 +1266,7 @@ private fun VolumeSection(
   onOutputClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val uiColors = LocalPlayerUiColors.current
   var sliderPosition by remember { mutableFloatStateOf(0f) }
   var isUserDragging by remember { mutableStateOf(false) }
   var ignoreServerUpdates by remember { mutableStateOf(false) }
@@ -1048,7 +1292,7 @@ private fun VolumeSection(
         Icons.AutoMirrored.Filled.VolumeUp
       },
       contentDescription = stringResource(R.string.main_button_mute_description),
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      tint = uiColors.secondaryForeground,
       modifier = Modifier
         .size(20.dp)
         .clickable(onClick = actions.mute)
@@ -1077,9 +1321,9 @@ private fun VolumeSection(
           ignoreServerUpdates = false
         }
       },
-      trackColor = MaterialTheme.colorScheme.onSurface,
-      inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-      thumbColor = MaterialTheme.colorScheme.onSurface,
+      trackColor = uiColors.primaryForeground,
+      inactiveTrackColor = uiColors.disabledForeground,
+      thumbColor = uiColors.primaryForeground,
       modifier = Modifier.weight(1f)
     )
 
@@ -1091,7 +1335,7 @@ private fun VolumeSection(
       Icon(
         imageVector = Icons.Default.SpeakerGroup,
         contentDescription = stringResource(R.string.output_selection_title),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = uiColors.secondaryForeground,
         modifier = Modifier.size(20.dp)
       )
     }
@@ -1100,6 +1344,7 @@ private fun VolumeSection(
 
 @Composable
 private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActions) {
+  val uiColors = LocalPlayerUiColors.current
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -1119,7 +1364,7 @@ private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActio
       Icon(
         imageVector = Icons.Default.SkipPrevious,
         contentDescription = stringResource(R.string.main_button_previous_description),
-        tint = MaterialTheme.colorScheme.onSurface,
+        tint = uiColors.primaryForeground,
         modifier = Modifier.size(36.dp)
       )
     }
@@ -1130,8 +1375,8 @@ private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActio
       modifier = Modifier.size(64.dp),
       shape = CircleShape,
       colors = IconButtonDefaults.filledIconButtonColors(
-        containerColor = MaterialTheme.colorScheme.onSurface,
-        contentColor = MaterialTheme.colorScheme.surface
+        containerColor = uiColors.playButtonContainer,
+        contentColor = uiColors.playButtonContent
       )
     ) {
       Icon(
@@ -1153,7 +1398,7 @@ private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActio
       Icon(
         imageVector = Icons.Default.SkipNext,
         contentDescription = stringResource(R.string.main_button_next_description),
-        tint = MaterialTheme.colorScheme.onSurface,
+        tint = uiColors.primaryForeground,
         modifier = Modifier.size(36.dp)
       )
     }
@@ -1167,11 +1412,7 @@ private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActio
           Icons.Default.Repeat
         },
         contentDescription = stringResource(R.string.main_button_repeat_description),
-        tint = if (playbackState.repeat != Repeat.None) {
-          MaterialTheme.colorScheme.primary
-        } else {
-          MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        tint = if (playbackState.repeat != Repeat.None) uiColors.primaryForeground else uiColors.mutedForeground,
         modifier = Modifier.size(24.dp)
       )
     }
@@ -1180,6 +1421,7 @@ private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActio
 
 @Composable
 private fun ShuffleButton(shuffleMode: ShuffleMode, onClick: () -> Unit) {
+  val uiColors = LocalPlayerUiColors.current
   val isActive = shuffleMode != ShuffleMode.Off
   val isAutoDj = shuffleMode == ShuffleMode.AutoDJ
 
@@ -1188,20 +1430,45 @@ private fun ShuffleButton(shuffleMode: ShuffleMode, onClick: () -> Unit) {
       Icon(
         imageVector = Icons.Default.Headset,
         contentDescription = stringResource(R.string.main_button_shuffle_description),
-        tint = MaterialTheme.colorScheme.primary,
+        tint = uiColors.primaryForeground,
         modifier = Modifier.size(24.dp)
       )
     } else {
       Icon(
         imageVector = Icons.Default.Shuffle,
         contentDescription = stringResource(R.string.main_button_shuffle_description),
-        tint = if (isActive) {
-          MaterialTheme.colorScheme.primary
-        } else {
-          MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        tint = if (isActive) uiColors.primaryForeground else uiColors.mutedForeground,
         modifier = Modifier.size(24.dp)
       )
     }
   }
+}
+
+private val leadingTimestampRegex = Regex("""^\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?]""")
+
+private fun leadingTimestampMs(line: String): Long? {
+  val match = leadingTimestampRegex.find(line) ?: return null
+  val minutes = match.groups[1]?.value?.toLongOrNull() ?: return null
+  val seconds = match.groups[2]?.value?.toLongOrNull() ?: return null
+  val fraction = match.groups[3]?.value.orEmpty()
+  val millis = when (fraction.length) {
+    0 -> 0L
+    1 -> fraction.toLong() * 100L
+    2 -> fraction.toLong() * 10L
+    else -> fraction.take(3).toLong()
+  }
+
+  return minutes * 60_000L + seconds * 1_000L + millis
+}
+
+private fun String.removeLeadingTimestamp(): String = replaceFirst(leadingTimestampRegex, "")
+
+private fun findActiveLyricIndex(timestamps: List<Long?>, positionMs: Long): Int {
+  var activeIndex = -1
+  timestamps.forEachIndexed { index, timestamp ->
+    if (timestamp != null && timestamp <= positionMs) {
+      activeIndex = index
+    }
+  }
+  return activeIndex
 }
