@@ -186,6 +186,11 @@ android {
     } else {
       signingConfigs.getByName("debug")
     }
+    val ciDebugSigningConfig = if (KeyLoader.isConfigured() && isCiBuild) {
+      signingConfigs.getByName("release")
+    } else {
+      signingConfigs.getByName("debug")
+    }
 
     getByName("release") {
       signingConfig = releaseSigningConfig
@@ -198,6 +203,7 @@ android {
     }
 
     getByName("debug") {
+      signingConfig = ciDebugSigningConfig
       applicationIdSuffix = ".dev"
       versionNameSuffix = "-dev"
       enableUnitTestCoverage = true

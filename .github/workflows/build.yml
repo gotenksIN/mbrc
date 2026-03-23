@@ -25,3 +25,7 @@ jobs:
           task: assembleGithubDebug
           artifact-name: app-github-debug
           artifact-path: app/build/outputs/apk/github/debug/*.apk
+          keystore-base64: ${{ secrets.CI_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.CI_KEYSTORE_PASSWORD }}
+          key-alias: ${{ secrets.CI_KEY_ALIAS }}
+          key-password: ${{ secrets.CI_KEY_PASSWORD }}
