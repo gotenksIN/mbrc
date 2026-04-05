@@ -90,6 +90,10 @@ val buildTimeProvider = providers.provider {
   df.timeZone = TimeZone.getTimeZone("UTC")
   df.format(Date())
 }
+val enableComposeCompilerReports =
+  providers.gradleProperty("composeCompilerReports")
+    .map { it.equals("true", ignoreCase = true) }
+    .orElse(false)
 val isCiBuild = System.getenv("CI")?.equals("true", ignoreCase = true) == true
 
 val appVersionName = "1.6.0-rc.4"
@@ -155,10 +159,12 @@ configure<com.android.build.api.dsl.ApplicationExtension> {
     }
   }
 
-  // Enable Compose compiler reports for debugging performance
-  composeCompiler {
-    reportsDestination = layout.buildDirectory.dir("compose_reports")
-    metricsDestination = layout.buildDirectory.dir("compose_metrics")
+  // Compose compiler metrics are diagnostic-only; keep normal builds fast.
+  if (enableComposeCompilerReports.get()) {
+    composeCompiler {
+      reportsDestination = layout.buildDirectory.dir("compose_reports")
+      metricsDestination = layout.buildDirectory.dir("compose_metrics")
+    }
   }
 
   signingConfigs {
