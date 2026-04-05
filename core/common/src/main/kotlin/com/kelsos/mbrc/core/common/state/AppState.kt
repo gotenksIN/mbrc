@@ -47,18 +47,6 @@ class AppState : AppStatePublisher {
   }
 
   override fun updatePlayingTrack(track: TrackInfo) {
-    val previousTrack = _playingTrack.value
-    val trackChanged =
-      previousTrack.path != track.path ||
-        previousTrack.title != track.title ||
-        previousTrack.artist != track.artist ||
-        previousTrack.album != track.album ||
-        previousTrack.year != track.year
-
-    if (trackChanged) {
-      _lyrics.value = emptyList()
-    }
-
     _playingTrack.value = track
   }
 

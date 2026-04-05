@@ -92,6 +92,9 @@ class AppStateManager(
           ConnectionStatus.Connected -> {
             wasConnectionAttempted = true
             serviceLifecycleManager.onConnectionRestored()
+            if (appState.playerStatus.value.state == PlayerState.Playing) {
+              startPositionUpdater()
+            }
           }
 
           ConnectionStatus.Authenticating -> {
