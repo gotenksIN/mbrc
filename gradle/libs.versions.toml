@@ -19,6 +19,7 @@ androidx-paging-compose = "3.4.2"
 androidx-paging-runtime-ktx = "3.4.2"
 androidx-palette = "1.0.0"
 androidx-preference-ktx = "1.2.1"
+androidx-profileinstaller = "1.4.1"
 androidx-recyclerview = "1.4.0"
 androidx-room = "2.8.4"
 androidx-swiperefreshlayout = "1.2.0"
@@ -35,7 +36,7 @@ desugar = "2.1.5"
 firebaseBom = "34.12.0"
 google-material = "1.13.0"
 gradlePlugin-agp = "9.1.0"
-gradlePlugin-baselineprofile = "1.4.1"
+gradlePlugin-baselineprofile = "1.5.0-alpha05"
 gradlePlugin-crashlytics = "3.0.7"
 gradlePlugin-detekt = "1.23.8"
 gradlePlugin-gms = "4.4.4"
@@ -101,7 +102,7 @@ androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", v
 androidx-paging-testing = { module = "androidx.paging:paging-testing", version.ref = "androidx-paging-runtime-ktx" }
 androidx-palette = { module = "androidx.palette:palette", version.ref = "androidx-palette" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "androidx-preference-ktx" }
-androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "gradlePlugin-baselineprofile" }
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidx-profileinstaller" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidx-recyclerview" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "androidx-room" }

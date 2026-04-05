@@ -59,13 +59,16 @@ allprojects {
 }
 
 subprojects {
-  pluginManager.withPlugin("org.jetbrains.kotlin.android") {
+  pluginManager.withPlugin("com.android.application") {
     apply(plugin = "org.jmailen.kotlinter")
     apply(plugin = "org.jetbrains.kotlinx.kover")
   }
 
   pluginManager.withPlugin("com.android.library") {
-    configure<com.android.build.gradle.LibraryExtension> {
+    apply(plugin = "org.jmailen.kotlinter")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
+    
+    configure<com.android.build.api.dsl.LibraryExtension> {
       lint {
         lintConfig = rootProject.file("config/lint.xml")
         sarifReport = true
