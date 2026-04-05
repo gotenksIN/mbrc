@@ -11,6 +11,10 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -58,7 +62,7 @@ class ConnectionTest : KoinTest {
   private fun createConnection(
     socket: Socket,
     config: ConnectionConfig = ConnectionConfig()
-  ): Connection = Connection(socket, moshi, dispatchers, config)
+  ): Connection = Connection(socket, moshi, config)
 
   @Test
   fun connectionShouldDetectHealthySocketState() {
@@ -198,6 +202,49 @@ class ConnectionTest : KoinTest {
 
       // Then
       assertThat(connection.isConnected).isFalse()
+    }
+  }
+
+  @Test
+  fun listenShouldEmitMessagesInSocketOrder() {
+    runTest {
+      val server = createTestServer()
+      val clientSocket = Socket()
+      clientSocket.connect(server.localSocketAddress)
+
+      val connection = createConnection(clientSocket)
+      val collected = mutableListOf<SocketMessage>()
+      val collectorJob = backgroundScope.launch {
+        connection.messages.take(2).toList(collected)
+      }
+      runCurrent()
+
+      executor.execute {
+        try {
+          val serverSocket = server.accept()
+          val adapter = moshi.adapter(SocketMessage::class.java)
+          val payload = listOf(
+            SocketMessage(context = "first", data = "1"),
+            SocketMessage(context = "second", data = "2")
+          ).joinToString(separator = "\r\n") { adapter.toJson(it) } + "\r\n"
+
+          serverSocket.getOutputStream().use { output ->
+            output.write(payload.toByteArray())
+            output.flush()
+          }
+          serverSocket.close()
+        } catch (e: Exception) {
+          if (!server.isClosed && !Thread.currentThread().isInterrupted) {
+            throw e
+          }
+        }
+      }
+
+      connection.listen()
+      collectorJob.join()
+
+      assertThat(collected.map(SocketMessage::context)).containsExactly("first", "second").inOrder()
+      collectorJob.cancel()
     }
   }
 }

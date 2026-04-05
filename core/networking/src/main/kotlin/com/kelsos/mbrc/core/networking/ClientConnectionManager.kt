@@ -15,8 +15,6 @@ import java.net.SocketAddress
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import kotlin.math.pow
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -268,7 +266,7 @@ class ClientConnectionManagerImpl(
 
   private fun setupConnection(socket: Socket) {
     val connection =
-      Connection(socket, moshi, dispatchers, connectionConfig).also {
+      Connection(socket, moshi, connectionConfig).also {
         this.connection = it
       }
 
@@ -402,14 +400,11 @@ class ClientConnectionManagerImpl(
 class Connection(
   private val socket: Socket,
   moshi: Moshi,
-  dispatchers: AppCoroutineDispatchers,
   private val config: ConnectionConfig = ConnectionConfig()
 ) {
   private val sink = socket.sink().buffer()
   private val source = socket.source().buffer()
   private val adapter = moshi.adapter(SocketMessage::class.java)
-  private val job = SupervisorJob()
-  private val scope = CoroutineScope(job + dispatchers.io)
   private val _messages = MutableSharedFlow<SocketMessage>(extraBufferCapacity = 64)
   val messages: Flow<SocketMessage> get() = _messages
 
@@ -436,8 +431,6 @@ class Connection(
   fun cleanup() {
     if (isCleanedUp) return
     isCleanedUp = true
-
-    job.cancel()
 
     runCatching {
       if (sink.isOpen) {
@@ -471,7 +464,7 @@ class Connection(
     sink.flush()
   }
 
-  private fun emitMessages(rawMessage: String) {
+  private suspend fun emitMessages(rawMessage: String) {
     val replies =
       rawMessage
         .split("\r\n".toRegex())
@@ -491,9 +484,7 @@ class Connection(
             return@runCatching
           }
 
-          scope.launch {
-            _messages.emit(message)
-          }
+          _messages.emit(message)
         }
 
       if (result.isFailure) {
@@ -517,7 +508,7 @@ class Connection(
   @Volatile
   private var messageParseFailureCount = 0
 
-  fun listen() {
+  suspend fun listen() {
     try {
       while (isConnected) {
         val rawMessage = readWithTimeout()
