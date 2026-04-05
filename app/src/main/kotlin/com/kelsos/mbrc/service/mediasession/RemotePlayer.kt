@@ -188,15 +188,17 @@ class RemotePlayer(
         COMMAND_SEEK_TO_NEXT,
         COMMAND_SEEK_TO_NEXT_MEDIA_ITEM
         -> userActionUseCase.next()
-      }
 
-      val to =
-        when (positionMs) {
-          C.TIME_UNSET -> 0L
-          else -> positionMs
+        else -> {
+          val to =
+            when (positionMs) {
+              C.TIME_UNSET -> 0L
+              else -> positionMs
+            }
+
+          userActionUseCase.performUserAction(Protocol.NowPlayingPosition, to)
         }
-
-      userActionUseCase.performUserAction(Protocol.NowPlayingPosition, to)
+      }
     }
     return immediateVoidFuture()
   }
