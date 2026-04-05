@@ -385,6 +385,7 @@ class ClientConnectionManagerImpl(
     }
 
     connection?.cleanup()
+    activityChecker.setPingTimeoutListener(null)
     activityChecker.stop()
 
     // Set state to Offline immediately
@@ -409,7 +410,7 @@ class Connection(
   private val adapter = moshi.adapter(SocketMessage::class.java)
   private val job = SupervisorJob()
   private val scope = CoroutineScope(job + dispatchers.io)
-  private val _messages = MutableSharedFlow<SocketMessage>()
+  private val _messages = MutableSharedFlow<SocketMessage>(extraBufferCapacity = 64)
   val messages: Flow<SocketMessage> get() = _messages
 
   @Volatile

@@ -111,7 +111,7 @@ class AppStateManager(
 
     launch {
       playingPosition.collect { position ->
-        val playerState = appState.playerStatus.map { it.state }.first()
+        val playerState = appState.playerStatus.value.state
         notifications.updateState(playerState, position)
       }
     }

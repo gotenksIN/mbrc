@@ -49,19 +49,23 @@ class PlayingTrackCacheImpl(
 
   override suspend fun persistInfo(playingTrack: TrackInfo) {
     withContext(dispatchers.io) {
-      context.cacheDataStore.updateData { store ->
-        val track = Track(
-          album = playingTrack.album,
-          artist = playingTrack.artist,
-          path = playingTrack.path,
-          title = playingTrack.title,
-          year = playingTrack.year
-        )
+      try {
+        context.cacheDataStore.updateData { store ->
+          val track = Track(
+            album = playingTrack.album,
+            artist = playingTrack.artist,
+            path = playingTrack.path,
+            title = playingTrack.title,
+            year = playingTrack.year
+          )
 
-        store.copy(
-          track = track,
-          cover = playingTrack.coverUrl
-        )
+          store.copy(
+            track = track,
+            cover = playingTrack.coverUrl
+          )
+        }
+      } catch (e: IOException) {
+        Timber.e(e, "Failed to persist playing track info")
       }
     }
   }
@@ -76,7 +80,7 @@ class PlayingTrackCacheImpl(
         album = track.album,
         year = track.year,
         path = track.path,
-        coverUrl = store.cover ?: ""
+        coverUrl = store.cover
       )
     } else {
       BasicTrackInfo(
@@ -85,7 +89,7 @@ class PlayingTrackCacheImpl(
         album = "",
         year = "",
         path = "",
-        coverUrl = store.cover ?: ""
+        coverUrl = store.cover
       )
     }
   }
