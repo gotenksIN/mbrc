@@ -85,30 +85,34 @@ fun AlbumsTab(
     items = albums,
     queueResults = queueResults,
     snackbarHostState = snackbarHostState,
-    headerContent = {
-      ActionHeader {
-        OutlinedButton(
-          onClick = { viewModel.playAll(shuffle = false) },
-          modifier = Modifier.weight(1f)
-        ) {
-          Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
-          androidx.compose.material3.Text(
-            text = playAllLabel,
-            modifier = Modifier.padding(start = 8.dp)
-          )
-        }
+    headerContent = if (showSync) {
+      {
+        ActionHeader {
+          OutlinedButton(
+            onClick = { viewModel.playAll(shuffle = false) },
+            modifier = Modifier.weight(1f)
+          ) {
+            Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null)
+            androidx.compose.material3.Text(
+              text = playAllLabel,
+              modifier = Modifier.padding(start = 8.dp)
+            )
+          }
 
-        Button(
-          onClick = { viewModel.playAll(shuffle = true) },
-          modifier = Modifier.weight(1f)
-        ) {
-          Icon(imageVector = Icons.Default.Shuffle, contentDescription = null)
-          androidx.compose.material3.Text(
-            text = shuffleAllLabel,
-            modifier = Modifier.padding(start = 8.dp)
-          )
+          Button(
+            onClick = { viewModel.playAll(shuffle = true) },
+            modifier = Modifier.weight(1f)
+          ) {
+            Icon(imageVector = Icons.Default.Shuffle, contentDescription = null)
+            androidx.compose.material3.Text(
+              text = shuffleAllLabel,
+              modifier = Modifier.padding(start = 8.dp)
+            )
+          }
         }
       }
+    } else {
+      null
     },
     syncState = SyncState(
       isSyncing = isSyncing,
