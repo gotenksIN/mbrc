@@ -1,6 +1,7 @@
 package com.kelsos.mbrc.ui
 
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
@@ -45,6 +46,11 @@ class MainActivity : ComponentActivity() {
 
     // Allow content to draw behind system bars
     WindowCompat.setDecorFitsSystemWindows(window, false)
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      window.isStatusBarContrastEnforced = false
+      window.isNavigationBarContrastEnforced = false
+    }
 
     // Start the remote service if not already running (same as BaseActivity)
     serviceChecker.startServiceIfNotRunning()

@@ -93,7 +93,7 @@ fun RemoteTheme(
   }
   val view = LocalView.current
   if (!view.isInEditMode) {
-    SideEffect {
+    androidx.compose.runtime.DisposableEffect(darkTheme, colorScheme) {
       val window = (view.context as Activity).window
       val insetsController = WindowCompat.getInsetsController(window, view)
       insetsController.isAppearanceLightStatusBars = !darkTheme
@@ -101,6 +101,7 @@ fun RemoteTheme(
       // Set navigation bar color to match theme background
       @Suppress("DEPRECATION")
       window.navigationBarColor = colorScheme.background.toArgb()
+      onDispose {}
     }
   }
 
