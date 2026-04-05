@@ -67,10 +67,10 @@ class QueueHandler(
   }
 
   suspend fun playArtist(artist: String, shuffle: Boolean = false): Outcome<Int> = try {
-    val paths = withContext(dispatchers.database) {
-      trackRepository.getTrackPaths(TrackQuery.Artist(artist))
+    val orderedPaths = withContext(dispatchers.database) {
+      val paths = trackRepository.getTrackPaths(TrackQuery.Artist(artist))
+      if (shuffle) paths.shuffled() else paths
     }
-    val orderedPaths = if (shuffle) paths.shuffled() else paths
     val playPath = orderedPaths.firstOrNull()
 
     if (playPath != null && queue(Queue.AddAll, orderedPaths, playPath)) {
@@ -84,10 +84,10 @@ class QueueHandler(
   }
 
   suspend fun playAllTracks(shuffle: Boolean = false): Outcome<Int> = try {
-    val paths = withContext(dispatchers.database) {
-      trackRepository.getTrackPaths(TrackQuery.All)
+    val orderedPaths = withContext(dispatchers.database) {
+      val paths = trackRepository.getTrackPaths(TrackQuery.All)
+      if (shuffle) paths.shuffled() else paths
     }
-    val orderedPaths = if (shuffle) paths.shuffled() else paths
     val playPath = orderedPaths.firstOrNull()
 
     if (playPath != null && queue(Queue.AddAll, orderedPaths, playPath)) {
