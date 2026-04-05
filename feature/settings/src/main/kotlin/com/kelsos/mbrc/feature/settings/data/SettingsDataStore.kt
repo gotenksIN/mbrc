@@ -79,7 +79,7 @@ object SettingsDataStore {
   }
 
   object DefaultValues {
-    const val THEME = "dark"
+    const val THEME = "system"
     const val DEBUG_LOGGING = false
     const val PLUGIN_UPDATE_CHECK = false
     const val INCOMING_CALL_ACTION = "none"

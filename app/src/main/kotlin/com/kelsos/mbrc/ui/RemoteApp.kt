@@ -51,7 +51,7 @@ fun RemoteApp() {
     Theme.System -> isSystemInDarkTheme()
   }
 
-  RemoteTheme(darkTheme = darkTheme) {
+  RemoteTheme(darkTheme = darkTheme, dynamicColor = true) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val snackbarHostState = remember { SnackbarHostState() }
