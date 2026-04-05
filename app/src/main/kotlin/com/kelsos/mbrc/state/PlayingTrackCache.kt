@@ -6,7 +6,6 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
-import com.google.protobuf.InvalidProtocolBufferException
 import com.kelsos.mbrc.core.common.state.BasicTrackInfo
 import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
@@ -42,7 +41,7 @@ class PlayingTrackCacheImpl(
         // dataStore.data throws an IOException when an error is encountered when reading data
         if (exception is IOException) {
           Timber.e(exception, "Error reading sort order preferences.")
-          emit(Store.getDefaultInstance())
+          emit(Store())
         } else {
           throw exception
         }
@@ -51,18 +50,18 @@ class PlayingTrackCacheImpl(
   override suspend fun persistInfo(playingTrack: TrackInfo) {
     withContext(dispatchers.io) {
       context.cacheDataStore.updateData { store ->
-        val track = Track.newBuilder()
-          .setAlbum(playingTrack.album)
-          .setArtist(playingTrack.artist)
-          .setPath(playingTrack.path)
-          .setTitle(playingTrack.title)
-          .setYear(playingTrack.year)
-          .build()
+        val track = Track(
+          album = playingTrack.album,
+          artist = playingTrack.artist,
+          path = playingTrack.path,
+          title = playingTrack.title,
+          year = playingTrack.year
+        )
 
-        store.toBuilder()
-          .setTrack(track)
-          .setCover(playingTrack.coverUrl)
-          .build()
+        store.copy(
+          track = track,
+          cover = playingTrack.coverUrl
+        )
       }
     }
   }
@@ -70,30 +69,41 @@ class PlayingTrackCacheImpl(
   override suspend fun restoreInfo(): TrackInfo = withContext(dispatchers.io) {
     val store = storeFlow.first()
     val track = store.track
-    BasicTrackInfo(
-      artist = track.artist,
-      title = track.title,
-      album = track.album,
-      year = track.year,
-      path = track.path,
-      coverUrl = store.cover
-    )
+    if (track != null) {
+      BasicTrackInfo(
+        artist = track.artist,
+        title = track.title,
+        album = track.album,
+        year = track.year,
+        path = track.path,
+        coverUrl = store.cover ?: ""
+      )
+    } else {
+      BasicTrackInfo(
+        artist = "",
+        title = "",
+        album = "",
+        year = "",
+        path = "",
+        coverUrl = store.cover ?: ""
+      )
+    }
   }
 }
 
 object PlayerStateSerializer : Serializer<Store> {
   override suspend fun readFrom(input: InputStream): Store {
     try {
-      return Store.parseFrom(input)
-    } catch (exception: InvalidProtocolBufferException) {
+      return Store.ADAPTER.decode(input)
+    } catch (exception: IOException) {
       throw CorruptionException("Cannot read proto.", exception)
     }
   }
 
   override suspend fun writeTo(t: Store, output: OutputStream) {
-    t.writeTo(output)
+    Store.ADAPTER.encode(output, t)
   }
 
   override val defaultValue: Store
-    get() = Store.getDefaultInstance()
+    get() = Store()
 }

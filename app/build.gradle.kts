@@ -7,11 +7,10 @@ import java.util.*
 
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlinAndroid)
   alias(libs.plugins.kotlinParcelize)
   alias(libs.plugins.kotlinCompose)
   alias(libs.plugins.ksp)
-  alias(libs.plugins.protobuf)
+  alias(libs.plugins.wire)
   alias(libs.plugins.googleServices) apply false
   alias(libs.plugins.crashlytics) apply false
   alias(libs.plugins.kotlinter)
@@ -98,7 +97,7 @@ val appVersionCode = 129
 val minSDKVersion = 23
 val compileSDKVersion = 36
 
-android {
+configure<com.android.build.api.dsl.ApplicationExtension> {
   compileSdk = compileSDKVersion
   namespace = "com.kelsos.mbrc"
   testNamespace = "com.kelsos.mbrc.test"
@@ -253,27 +252,18 @@ android {
       pickFirsts.add("META-INF/atomicfu.kotlin_module")
     }
   }
-
   sourceSets {
+    getByName("main") {
+      assets.directories.add(layout.buildDirectory.dir("generated/assets/license").get().asFile.absolutePath)
+    }
     getByName("androidTest") {
-      assets.srcDirs("$projectDir/schemas")
+      assets.directories.add(file("$projectDir/schemas").absolutePath)
     }
   }
 
   lint {
     lintConfig = rootProject.file("config/lint.xml")
     sarifReport = true
-  }
-
-  applicationVariants.all {
-    val variant = this
-    variant.outputs.map { it as BaseVariantOutputImpl }
-      .forEach { output ->
-        val applicationId = defaultConfig.applicationId
-        val flavorName = variant.flavorName
-        val name = "$applicationId-$flavorName-${variant.versionCode}-v${variant.versionName}.apk"
-        output.outputFileName = name
-      }
   }
 }
 
@@ -340,7 +330,6 @@ dependencies {
   implementation(libs.bundles.coil)
   implementation(libs.bundles.koin)
   implementation(libs.google.material)
-  implementation(libs.google.protobuf.javalite)
   implementation(libs.squareup.moshi.lib)
   implementation(libs.squareup.okio)
   implementation(libs.squareup.okhttp)
@@ -414,19 +403,12 @@ kover {
   }
 }
 
-protobuf {
-  protoc {
-    artifact = "com.google.protobuf:protoc:${project.libs.versions.protobuf.get()}"
+wire {
+  sourcePath {
+    srcDir("src/main/proto")
   }
-
-  generateProtoTasks {
-    all().forEach { task ->
-      task.builtins {
-        create("java") {
-          option("lite")
-        }
-      }
-    }
+  kotlin {
+    android = true
   }
 }
 

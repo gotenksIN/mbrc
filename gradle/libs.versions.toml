@@ -34,7 +34,7 @@ coil-compose = "3.4.0"
 desugar = "2.1.5"
 firebaseBom = "34.12.0"
 google-material = "1.13.0"
-gradlePlugin-agp = "8.13.2"
+gradlePlugin-agp = "9.1.0"
 gradlePlugin-baselineprofile = "1.4.1"
 gradlePlugin-crashlytics = "3.0.7"
 gradlePlugin-detekt = "1.23.8"
@@ -42,8 +42,8 @@ gradlePlugin-gms = "4.4.4"
 gradlePlugin-kotlinter = "5.4.2"
 gradlePlugin-kover = "0.9.8"
 gradlePlugin-ksp = "2.3.6"
-gradlePlugin-protobuf = "0.9.6"
 gradlePlugin-screenshot = "0.0.1-alpha14"
+gradlePlugin-wire = "6.2.0"
 gradlePlugin-versionCatalog = "1.1.0"
 gradlePlugin-versionsBenManes = "0.54.0"
 koin = "4.2.1"
@@ -127,7 +127,7 @@ google-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref
 google-firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 google-firebase-perf = { module = "com.google.firebase:firebase-perf" }
 google-material = { module = "com.google.android.material:material", version.ref = "google-material" }
-google-protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
+squareup-wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "gradlePlugin-wire" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
@@ -211,7 +211,7 @@ kotlinParcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = 
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "gradlePlugin-kotlinter" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "gradlePlugin-kover" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "gradlePlugin-ksp" }
-protobuf = { id = "com.google.protobuf", version.ref = "gradlePlugin-protobuf" }
+wire = { id = "com.squareup.wire", version.ref = "gradlePlugin-wire" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "gradlePlugin-screenshot" }
 versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "gradlePlugin-versionCatalog" }
 versionsBenManes = { id = "com.github.ben-manes.versions", version.ref = "gradlePlugin-versionsBenManes" }
