@@ -107,10 +107,9 @@ class UpdateNowPlayingTrack(
         album = track.album,
         year = track.year,
         path = track.path
-      )
+    )
     stateHandler.updatePlayingTrack(newState)
     notifier.notifyTrackChanged(newState)
-    notifier.persistTrackInfo(newState)
     notifier.requestTrackDetails()
   }
 }

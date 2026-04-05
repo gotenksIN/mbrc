@@ -33,7 +33,6 @@ interface PlayerStateHandler {
 interface TrackChangeNotifier {
   fun notifyTrackChanged(track: TrackInfo)
   fun notifyPlayStateChanged(state: PlayerState)
-  fun persistTrackInfo(track: TrackInfo)
   fun requestTrackDetails()
 }
 

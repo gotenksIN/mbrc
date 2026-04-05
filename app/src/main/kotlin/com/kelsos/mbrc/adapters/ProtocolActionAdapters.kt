@@ -92,12 +92,6 @@ class TrackChangeNotifierImpl(
     widgetUpdater.updatePlayState(state)
   }
 
-  override fun persistTrackInfo(track: TrackInfo) {
-    scope.launch {
-      cache.persistInfo(track.toPlayingTrack())
-    }
-  }
-
   override fun requestTrackDetails() {
     scope.launch(dispatchers.network) {
       runCatching {
