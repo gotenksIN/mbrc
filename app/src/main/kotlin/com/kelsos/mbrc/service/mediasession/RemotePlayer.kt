@@ -218,9 +218,9 @@ class RemotePlayer(
     scope.launch {
       val mode =
         if (shuffleModeEnabled) {
-          ShuffleMode.OFF
-        } else {
           ShuffleMode.SHUFFLE
+        } else {
+          ShuffleMode.OFF
         }
       userActionUseCase.perform(UserAction(Protocol.PlayerShuffle, mode))
     }
