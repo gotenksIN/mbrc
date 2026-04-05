@@ -390,6 +390,9 @@ dependencies {
   androidTestImplementation(libs.kotlin.coroutines.test)
   androidTestImplementation(libs.mockk.android)
 
+  if (!isCiBuild) {
+    debugImplementation(libs.squareup.leakcanary)
+  }
   debugImplementation(libs.androidx.fragment.testing)
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
