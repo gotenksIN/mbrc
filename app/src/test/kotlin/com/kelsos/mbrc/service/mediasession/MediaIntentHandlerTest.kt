@@ -8,6 +8,8 @@ import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
 import com.kelsos.mbrc.core.networking.protocol.base.Protocol
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
 import com.kelsos.mbrc.core.networking.protocol.usecases.VolumeModifyUseCase
+import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
+import kotlinx.coroutines.Dispatchers
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -26,6 +28,7 @@ class MediaIntentHandlerTest {
   private lateinit var mediaIntentHandler: MediaIntentHandler
   private lateinit var userActionUseCase: UserActionUseCase
   private lateinit var volumeModifyUseCase: VolumeModifyUseCase
+  private lateinit var dispatchers: AppCoroutineDispatchers
 
   @Before
   fun setUp() {
@@ -36,7 +39,10 @@ class MediaIntentHandlerTest {
       coEvery { increase() } just Runs
       coEvery { decrease() } just Runs
     }
-    mediaIntentHandler = MediaIntentHandler(userActionUseCase, volumeModifyUseCase)
+    dispatchers = mockk {
+      every { main } returns Dispatchers.Unconfined
+    }
+    mediaIntentHandler = MediaIntentHandler(userActionUseCase, volumeModifyUseCase, dispatchers)
   }
 
   // region Null and invalid intent tests
@@ -224,7 +230,7 @@ class MediaIntentHandlerTest {
     val freshUserActionUseCase: UserActionUseCase = mockk {
       every { tryPerform(any()) } just Runs
     }
-    val freshHandler = MediaIntentHandler(freshUserActionUseCase, volumeModifyUseCase)
+    val freshHandler = MediaIntentHandler(freshUserActionUseCase, volumeModifyUseCase, dispatchers)
 
     // Single click on fresh handler (simulating click after timeout from previous)
     val intent = createMediaButtonIntent(KeyEvent.KEYCODE_HEADSETHOOK)

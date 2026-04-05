@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 /**
@@ -44,13 +43,8 @@ class NotificationActionReceiver(
       context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) ==
         PackageManager.PERMISSION_GRANTED
 
-    // Get current call action synchronously for filter setup
-    val handleCallAction = runBlocking {
-      settingsManager.incomingCallActionFlow.first() != CallAction.None
-    }
-
     return IntentFilter().apply {
-      if (hasPermission && handleCallAction) {
+      if (hasPermission) {
         addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
       }
       addAction(MediaIntentActions.PLAY_PRESSED)

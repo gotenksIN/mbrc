@@ -34,10 +34,9 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -48,7 +47,7 @@ class RemotePlayer(
   private val volumeModifyUseCase: VolumeModifyUseCase,
   private val appState: AppStateFlow,
   private val dispatchers: AppCoroutineDispatchers,
-  scope: CoroutineScope
+  private val scope: CoroutineScope
 ) : SimpleBasePlayer(context.mainLooper) {
   init {
     appState.playerStatus.invalidateStateOnEach(scope)
@@ -67,10 +66,10 @@ class RemotePlayer(
     else -> STATE_IDLE
   }
 
-  override fun getState(): State = runBlocking {
-    val statusModel = appState.playerStatus.firstOrNull() ?: PlayerStatusModel()
-    val position = appState.playingPosition.firstOrNull().orEmpty()
-    val playingTrack = appState.playingTrack.firstOrNull().orEmpty().toPlayingTrack()
+  override fun getState(): State {
+    val statusModel = appState.playerStatus.value
+    val position = appState.playingPosition.value.orEmpty()
+    val playingTrack = appState.playingTrack.value.orEmpty().toPlayingTrack()
     val isStream = position.isStream
 
     val commandsBuilder = Player.Commands
@@ -124,7 +123,7 @@ class RemotePlayer(
 
     val playlist = listOf(previous, mediaItem, next)
 
-    State
+    return State
       .Builder()
       .setAvailableCommands(commands)
       .setAudioAttributes(AudioAttributes.DEFAULT)
@@ -180,7 +179,7 @@ class RemotePlayer(
     seekCommand: Int
   ): ListenableFuture<*> {
     Timber.d("received seek command: $seekCommand item: $mediaItemIndex at $positionMs")
-    runBlocking {
+    scope.launch {
       when (seekCommand) {
         COMMAND_SEEK_TO_PREVIOUS,
         COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM
@@ -204,7 +203,7 @@ class RemotePlayer(
 
   override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
     Timber.d("received play when ready: $playWhenReady")
-    runBlocking {
+    scope.launch {
       if (playWhenReady) {
         userActionUseCase.play()
       } else {
@@ -216,7 +215,7 @@ class RemotePlayer(
 
   override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> {
     Timber.d("received shuffle mode enabled: $shuffleModeEnabled")
-    runBlocking {
+    scope.launch {
       val mode =
         if (shuffleModeEnabled) {
           ShuffleMode.OFF
@@ -229,7 +228,7 @@ class RemotePlayer(
   }
 
   override fun handleStop(): ListenableFuture<*> {
-    runBlocking {
+    scope.launch {
       userActionUseCase.perform(UserAction(Protocol.PlayerStop, true))
     }
     return immediateVoidFuture()
@@ -237,7 +236,7 @@ class RemotePlayer(
 
   override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {
     Timber.d("received device volume: $deviceVolume")
-    runBlocking {
+    scope.launch {
       userActionUseCase.perform(UserAction(Protocol.PlayerVolume, deviceVolume))
     }
     return immediateVoidFuture()
@@ -245,7 +244,7 @@ class RemotePlayer(
 
   override fun handleIncreaseDeviceVolume(flags: Int): ListenableFuture<*> {
     Timber.d("received increase device volume")
-    runBlocking {
+    scope.launch {
       volumeModifyUseCase.increase()
     }
     return immediateVoidFuture()
@@ -253,7 +252,7 @@ class RemotePlayer(
 
   override fun handleDecreaseDeviceVolume(flags: Int): ListenableFuture<*> {
     Timber.d("received decrease device volume")
-    runBlocking {
+    scope.launch {
       volumeModifyUseCase.decrease()
     }
     return immediateVoidFuture()
@@ -261,7 +260,7 @@ class RemotePlayer(
 
   override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> {
     Timber.d("received device muted: $muted")
-    runBlocking {
+    scope.launch {
       userActionUseCase.perform(UserAction(Protocol.PlayerMute, muted))
     }
     return immediateVoidFuture()

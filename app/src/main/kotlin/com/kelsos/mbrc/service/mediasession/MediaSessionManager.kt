@@ -16,8 +16,6 @@ import com.kelsos.mbrc.core.platform.state.toPlayingTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
 
 /**
  * Manages the media session for the application.
@@ -62,13 +60,10 @@ class MediaSessionManager(
           playWhenReady: Boolean
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
           val item =
-            runBlocking {
-              val currentPlayingTrack = appState.playingTrack.firstOrNull()
-              currentPlayingTrack
-                .orEmpty()
-                .toPlayingTrack()
-                .toMediaItem()
-            }
+            appState.playingTrack.value
+              .orEmpty()
+              .toPlayingTrack()
+              .toMediaItem()
           return Futures.immediateFuture(
             MediaSession.MediaItemsWithStartPosition(listOf(item), 0, 0)
           )

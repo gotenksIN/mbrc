@@ -2,16 +2,22 @@ package com.kelsos.mbrc.service.mediasession
 
 import android.content.Intent
 import android.view.KeyEvent
+import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.networking.protocol.actions.UserAction
 import com.kelsos.mbrc.core.networking.protocol.base.Protocol
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
 import com.kelsos.mbrc.core.networking.protocol.usecases.VolumeModifyUseCase
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class MediaIntentHandler(
   private val userActionUseCase: UserActionUseCase,
-  private val volumeModifyUseCase: VolumeModifyUseCase
+  private val volumeModifyUseCase: VolumeModifyUseCase,
+  dispatchers: AppCoroutineDispatchers
 ) {
+  private val scope = CoroutineScope(SupervisorJob() + dispatchers.main)
+
   private var previousClick: Long = 0
 
   private fun getKeyEventFromIntent(mediaIntent: Intent?): KeyEvent? {
@@ -68,12 +74,12 @@ class MediaIntentHandler(
       KeyEvent.KEYCODE_MEDIA_PREVIOUS -> postAction(UserAction(Protocol.PlayerPrevious, true))
 
       KeyEvent.KEYCODE_VOLUME_UP -> {
-        runBlocking { volumeModifyUseCase.increase() }
+        scope.launch { volumeModifyUseCase.increase() }
         true
       }
 
       KeyEvent.KEYCODE_VOLUME_DOWN -> {
-        runBlocking { volumeModifyUseCase.decrease() }
+        scope.launch { volumeModifyUseCase.decrease() }
         true
       }
 
