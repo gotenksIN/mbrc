@@ -42,8 +42,8 @@ import org.koin.compose.koinInject
 @Composable
 fun RemoteApp() {
   val settingsManager: SettingsManager = koinInject()
-  // Initial value matches DataStore default ("dark") to avoid flash on first load
-  val themeState by settingsManager.themeFlow.collectAsStateWithLifecycle(initialValue = Theme.Dark)
+  // Initial value matches DataStore default ("system") to avoid a theme flash on first load
+  val themeState by settingsManager.themeFlow.collectAsStateWithLifecycle(initialValue = Theme.System)
 
   val darkTheme = when (themeState) {
     Theme.Light -> false
