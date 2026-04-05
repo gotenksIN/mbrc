@@ -1,6 +1,7 @@
 package com.kelsos.mbrc.feature.playback.lyrics.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -141,9 +142,11 @@ fun LyricsScreenContent(
           verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
           itemsIndexed(lyrics) { index, line ->
+            val timestamp = lyricTimestamps[index]
             LyricsLine(
               text = line,
-              isActive = index == activeLineIndex
+              isActive = index == activeLineIndex,
+              onClick = if (timestamp != null) { { onSeek(timestamp.toFloat() / playingPosition.total) } } else null
             )
           }
         }
@@ -225,6 +228,7 @@ private fun LyricsHeader(
 private fun LyricsLine(
   text: String,
   isActive: Boolean,
+  onClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier
 ) {
   val displayText = text.removeLeadingTimestamp().trim()
@@ -247,6 +251,7 @@ private fun LyricsLine(
       modifier = modifier
         .fillMaxWidth()
         .padding(vertical = 4.dp)
+        .let { if (onClick != null) it.clickable { onClick() } else it }
     )
   }
 }

@@ -1,5 +1,6 @@
 package com.kelsos.mbrc.feature.playback.player.compose
 
+import android.app.Activity
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import androidx.compose.animation.animateColorAsState
@@ -77,6 +78,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -596,12 +599,14 @@ private fun CoverOrLyricsPanel(
   lyrics: List<String>,
   playingPosition: PlayingPosition,
   showLyrics: Boolean,
+  onSeek: (Int) -> Unit,
   modifier: Modifier = Modifier
 ) {
   if (showLyrics && lyrics.isNotEmpty()) {
     ReplaceCoverLyricsPanel(
       lyrics = lyrics,
       playingPosition = playingPosition,
+      onSeek = onSeek,
       modifier = modifier
     )
   } else {
@@ -613,6 +618,7 @@ private fun CoverOrLyricsPanel(
 private fun ReplaceCoverLyricsPanel(
   lyrics: List<String>,
   playingPosition: PlayingPosition,
+  onSeek: (Int) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val uiColors = LocalPlayerUiColors.current
@@ -654,6 +660,7 @@ private fun ReplaceCoverLyricsPanel(
       ) {
         itemsIndexed(lyrics) { index, line ->
           val displayText = line.removeLeadingTimestamp().trim()
+          val timestamp = lyricTimestamps[index]
           if (displayText.isBlank()) {
             Spacer(modifier = Modifier.height(18.dp))
           } else {
@@ -666,7 +673,15 @@ private fun ReplaceCoverLyricsPanel(
                 MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
               },
               color = if (index == activeLineIndex) uiColors.primaryForeground else uiColors.disabledForeground,
-              modifier = Modifier.fillMaxWidth()
+              modifier = Modifier
+                .fillMaxWidth()
+                .let { m ->
+                  if (timestamp != null) {
+                    m.clickable { onSeek(timestamp.toInt()) }
+                  } else {
+                    m
+                  }
+                }
             )
           }
         }
@@ -720,6 +735,7 @@ private fun PortraitPlayerLayout(
         lyrics = lyrics,
         playingPosition = playingPosition,
         showLyrics = showLyrics,
+        onSeek = actions.seek,
         modifier = Modifier.fillMaxSize()
       )
     }
@@ -767,6 +783,8 @@ private fun PortraitPlayerLayout(
     BlurPlayerActionDock(
       onOutputClick = onOutputClick,
       onQueueClick = onTrackInfoClick,
+      hasLyrics = hasLyrics,
+      onLyricsClick = onLyricsClick,
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 24.dp)
@@ -823,6 +841,7 @@ private fun TabletPlayerLayout(
         lyrics = lyrics,
         playingPosition = playingPosition,
         showLyrics = showLyrics,
+        onSeek = actions.seek,
         modifier = Modifier
           .size(320.dp)
       )
@@ -919,6 +938,7 @@ private fun LandscapePlayerLayout(
         lyrics = lyrics,
         playingPosition = playingPosition,
         showLyrics = showLyrics,
+        onSeek = actions.seek,
         modifier = Modifier
           .fillMaxHeight(PlayerConstants.LANDSCAPE_ALBUM_HEIGHT_FRACTION)
           .aspectRatio(1f)
@@ -1076,13 +1096,17 @@ private fun TrackInfoWithFavorite(
     }
 
     // Lyrics button - primary color when lyrics available
-    IconButton(onClick = onLyricsClick) {
-      Icon(
-        imageVector = Icons.Outlined.Lyrics,
-        contentDescription = stringResource(R.string.nav_lyrics),
-        tint = if (hasLyrics) uiColors.primaryForeground else uiColors.mutedForeground,
-        modifier = Modifier.size(24.dp)
-      )
+    if (hasLyrics) {
+      IconButton(onClick = onLyricsClick) {
+        Icon(
+          imageVector = Icons.Outlined.Lyrics,
+          contentDescription = stringResource(R.string.nav_lyrics),
+          tint = uiColors.primaryForeground,
+          modifier = Modifier.size(24.dp)
+        )
+      }
+    } else {
+      Spacer(modifier = Modifier.size(48.dp)) // IconButton default size to keep centering
     }
   }
 }
@@ -1135,6 +1159,8 @@ private fun BlurTrackInfo(
 private fun BlurPlayerActionDock(
   onOutputClick: () -> Unit,
   onQueueClick: () -> Unit,
+  hasLyrics: Boolean = false,
+  onLyricsClick: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   Row(
@@ -1142,6 +1168,15 @@ private fun BlurPlayerActionDock(
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically
   ) {
+    if (hasLyrics) {
+      BlurDockItem(
+        icon = Icons.Outlined.Lyrics,
+        label = "Lyrics",
+        contentDescription = stringResource(R.string.nav_lyrics),
+        onClick = onLyricsClick,
+        isActive = true
+      )
+    }
     BlurDockItem(
       icon = Icons.Default.SpeakerGroup,
       label = "Output",
@@ -1162,7 +1197,8 @@ private fun BlurDockItem(
   icon: androidx.compose.ui.graphics.vector.ImageVector,
   label: String,
   contentDescription: String,
-  onClick: () -> Unit
+  onClick: () -> Unit,
+  isActive: Boolean = false
 ) {
   val uiColors = LocalPlayerUiColors.current
   Column(
@@ -1172,14 +1208,14 @@ private fun BlurDockItem(
     Icon(
       imageVector = icon,
       contentDescription = contentDescription,
-      tint = uiColors.secondaryForeground,
+      tint = if (isActive) uiColors.primaryForeground else uiColors.secondaryForeground,
       modifier = Modifier.size(22.dp)
     )
     Spacer(modifier = Modifier.height(6.dp))
     Text(
       text = label,
       style = MaterialTheme.typography.labelMedium,
-      color = uiColors.secondaryForeground
+      color = if (isActive) uiColors.primaryForeground else uiColors.secondaryForeground
     )
   }
 }
@@ -1207,36 +1243,28 @@ private fun ProgressSection(
   }
 
   Column(modifier = modifier) {
-    if (isStream) {
-      // For streams, show a wiggly wave indicator (not seekable)
-      WaveProgressIndicator(
-        modifier = Modifier.fillMaxWidth(),
-        color = uiColors.primaryForeground,
-        backgroundColor = uiColors.disabledForeground
-      )
-    } else {
-      ThinSlider(
-        value = if (isUserSeeking || ignoreServerUpdates) sliderPosition else currentNormalized,
-        onValueChange = {
-          isUserSeeking = true
-          sliderPosition = it
-        },
-        onValueChangeFinished = {
-          onSeek((sliderPosition * totalMs).toInt())
-          isUserSeeking = false
-          ignoreServerUpdates = true
-          // Keep ignoring server updates for a bit after release to prevent jumping
-          scope.launch {
-            delay(PlayerConstants.SLIDER_DEBOUNCE_MS)
-            ignoreServerUpdates = false
-          }
-        },
-        trackColor = uiColors.primaryForeground,
-        inactiveTrackColor = uiColors.disabledForeground,
-        thumbColor = uiColors.primaryForeground,
-        modifier = Modifier.fillMaxWidth()
-      )
-    }
+    ThinSlider(
+      value = if (isUserSeeking || ignoreServerUpdates) sliderPosition else currentNormalized,
+      onValueChange = {
+        isUserSeeking = true
+        sliderPosition = it
+      },
+      onValueChangeFinished = {
+        onSeek((sliderPosition * totalMs).toInt())
+        isUserSeeking = false
+        ignoreServerUpdates = true
+        // Keep ignoring server updates for a bit after release to prevent jumping
+        scope.launch {
+          delay(PlayerConstants.SLIDER_DEBOUNCE_MS)
+          ignoreServerUpdates = false
+        }
+      },
+      enabled = !isStream,
+      trackColor = uiColors.primaryForeground,
+      inactiveTrackColor = uiColors.disabledForeground,
+      thumbColor = uiColors.primaryForeground,
+      modifier = Modifier.fillMaxWidth()
+    )
 
     Spacer(modifier = Modifier.height(4.dp))
 
