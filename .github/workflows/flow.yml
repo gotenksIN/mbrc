@@ -15,6 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   # JVM settings optimized for CI builds
   # - 6GB heap for multi-module Android projects
   # - ParallelGC is faster than G1GC for Android builds (9-20% improvement)

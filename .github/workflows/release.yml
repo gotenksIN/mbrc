@@ -31,6 +31,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   GRADLE_OPTS: >-
     -Dorg.gradle.jvmargs=-Xmx6g\ -XX:+UseParallelGC\ -XX:MaxMetaspaceSize=1g\ -XX:+HeapDumpOnOutOfMemoryError\ -Dfile.encoding=UTF-8
     -Dorg.gradle.parallel=true
