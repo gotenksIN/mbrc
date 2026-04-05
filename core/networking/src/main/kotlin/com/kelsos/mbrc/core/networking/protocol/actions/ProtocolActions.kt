@@ -48,11 +48,13 @@ class UpdateLyrics(mapper: Moshi, private val stateHandler: PlayerStateHandler) 
   private val adapter = mapper.adapter(LyricsPayload::class.java)
 
   override suspend fun execute(message: ProtocolMessage) {
-    val payload = adapter.fromJsonValue(message.data) ?: return
+    val payload = adapter.fromJsonValue(message.data)
+    Timber.d("Lyrics payload parsed: $payload")
+    if (payload == null) return
 
     val lyrics =
       if (payload.status == LyricsPayload.SUCCESS) {
-        payload.lyrics
+        val raw = payload.lyrics
           .replace("<p>", "\r\n")
           .replace("<br>", "\n")
           .replace("&lt;", "<")
@@ -61,12 +63,17 @@ class UpdateLyrics(mapper: Moshi, private val stateHandler: PlayerStateHandler) 
           .replace("&apos;", "'")
           .replace("&amp;", "&")
           .trim()
-          .split(LYRICS_NEWLINE.toRegex())
-          .dropLastWhile(String::isEmpty)
+
+        if (raw.isEmpty() || raw.equals("Not found", ignoreCase = true)) {
+          emptyList()
+        } else {
+          raw.split(LYRICS_NEWLINE.toRegex()).dropLastWhile { it.isEmpty() }
+        }
       } else {
         emptyList()
       }
 
+    Timber.d("Lyrics processed size: ${lyrics.size}")
     stateHandler.updateLyrics(lyrics)
   }
 
