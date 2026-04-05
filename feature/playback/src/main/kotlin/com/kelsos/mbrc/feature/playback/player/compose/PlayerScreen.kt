@@ -160,6 +160,29 @@ fun PlayerScreen(
   // Compute scaffold configuration based on current state
   val topBarState = TopBarState.WithTitle(title)
   val onOverflowClick: (() -> Unit)? = { showBottomSheet = true }
+  val darkTheme = isSystemInDarkTheme()
+  val defaultBackground = MaterialTheme.colorScheme.background
+  val topBarAlbumArtState = rememberAlbumArtState(
+    coverUrl = playingTrack.coverUrl,
+    defaultBackground = defaultBackground,
+    darkTheme = darkTheme
+  )
+  val topBarContentColor = remember(topBarAlbumArtState.colors.dominant) {
+    playerUiColorsFor(topBarAlbumArtState.colors.dominant).primaryForeground
+  }
+  val view = LocalView.current
+  val fallbackUseDarkStatusBarIcons = MaterialTheme.colorScheme.background.luminance() > 0.5f
+
+  DisposableEffect(view, topBarContentColor, fallbackUseDarkStatusBarIcons) {
+    val window = (view.context as? Activity)?.window ?: return@DisposableEffect onDispose {}
+    val insetsController = WindowCompat.getInsetsController(window, view)
+
+    insetsController.isAppearanceLightStatusBars = topBarContentColor.luminance() < 0.5f
+
+    onDispose {
+      insetsController.isAppearanceLightStatusBars = fallbackUseDarkStatusBarIcons
+    }
+  }
 
   if (showBottomSheet) {
     PlayerBottomSheet(
@@ -196,6 +219,7 @@ fun PlayerScreen(
     onOpenDrawer = onOpenDrawer,
     onOverflowClick = onOverflowClick,
     isTransparent = true,
+    contentColor = topBarContentColor,
     modifier = modifier
   ) { paddingValues ->
     // Ignore padding for player screen as it uses transparent top bar
