@@ -18,8 +18,9 @@ import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.platform.mediasession.NotificationData
 import com.kelsos.mbrc.core.platform.state.toPlayingTrack
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 interface AppNotificationManager {
@@ -48,10 +49,24 @@ class AppNotificationManagerImpl(
   private val dispatchers: AppCoroutineDispatchers,
   private val notificationManager: NotificationManager,
   private val notificationBuilder: NotificationBuilder,
-  private val mediaSessionManager: MediaSessionManager
+  private val mediaSessionManager: MediaSessionManager,
+  private val coverDecoder: suspend (String) -> android.graphics.Bitmap? = { coverUrl ->
+    val uri = coverUrl.toUri()
+    runCatching {
+      withContext(dispatchers.io) {
+        decodeFile(
+          checkNotNull(uri.path),
+          BitmapFactory.Options().apply {
+            inPreferredConfig = Config.RGB_565
+          }
+        )
+      }
+    }.getOrNull()
+  }
 ) : AppNotificationManager {
   private var notification: Notification? = null
   private var notificationData: NotificationData = NotificationData()
+  private val notificationMutex = Mutex()
 
   init {
     ensureChannelExists()
@@ -85,45 +100,48 @@ class AppNotificationManagerImpl(
         if (coverUrl.isEmpty()) {
           null
         } else {
-          val uri = coverUrl.toUri()
-          runCatching {
-            withContext(Dispatchers.IO) {
-              decodeFile(
-                checkNotNull(uri.path),
-                BitmapFactory.Options().apply {
-                  inPreferredConfig = Config.RGB_565
-                }
-              )
-            }
-          }.getOrNull()
+          coverDecoder(coverUrl)
         }
-      notificationData = notificationData.copy(track = playingTrack.toPlayingTrack(), cover = cover)
-      update(notificationData)
+      updateNotification {
+        copy(track = playingTrack.toPlayingTrack(), cover = cover)
+      }
     }
   }
 
   override fun connectionStateChanged(connected: Boolean) {
-    if (connected) {
-      val mediaSession = mediaSessionManager.mediaSession ?: return
-      notification = notificationBuilder.createBuilder(this.notificationData, mediaSession).build()
-      notificationManager.notify(AppNotificationManager.MEDIA_SESSION_NOTIFICATION_ID, notification)
-    } else {
-      // Replace the notification with a placeholder to indicate disconnection.
-      // The ServiceLifecycleManager will eventually stop the service and remove it,
-      // but this avoids showing stale track data during the reconnection window.
-      notificationData = NotificationData()
-      notification = notificationBuilder.createPlaceholderBuilder().build()
-      notificationManager.notify(AppNotificationManager.MEDIA_SESSION_NOTIFICATION_ID, notification)
+    mediaSessionManager.scope.launch {
+      notificationMutex.withLock {
+        if (connected) {
+          update(notificationData)
+        } else {
+          // Replace the notification with a placeholder to indicate disconnection.
+          // The ServiceLifecycleManager will eventually stop the service and remove it,
+          // but this avoids showing stale track data during the reconnection window.
+          notificationData = NotificationData()
+          notification = notificationBuilder.createPlaceholderBuilder().build()
+          withContext(dispatchers.main) {
+            notificationManager.notify(AppNotificationManager.MEDIA_SESSION_NOTIFICATION_ID, notification)
+          }
+        }
+      }
     }
   }
 
   override fun updateState(state: PlayerState, position: PlayingPosition) {
     mediaSessionManager.scope.launch {
-      notificationData = notificationData.copy(
-        playerState = state,
-        isStream = position.isStream,
-        elapsedTime = if (position.isStream) position.currentMinutes else ""
-      )
+      updateNotification {
+        copy(
+          playerState = state,
+          isStream = position.isStream,
+          elapsedTime = if (position.isStream) position.currentMinutes else ""
+        )
+      }
+    }
+  }
+
+  private suspend fun updateNotification(updateData: NotificationData.() -> NotificationData) {
+    notificationMutex.withLock {
+      notificationData = notificationData.updateData()
       update(notificationData)
     }
   }
