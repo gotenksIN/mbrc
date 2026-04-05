@@ -146,7 +146,7 @@ fun LyricsScreenContent(
             LyricsLine(
               text = line,
               isActive = index == activeLineIndex,
-              onClick = if (timestamp != null) { { onSeek(timestamp.toFloat() / playingPosition.total) } } else null
+              onClick = if (timestamp != null) { { onSeek(timestamp.toFloat()) } } else null
             )
           }
         }
