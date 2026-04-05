@@ -88,7 +88,9 @@ class ClientConnectionManagerImpl(
     onStart() // Reset coroutine scope after stop
     currentCycleInfo = cycleInfo
     launch {
-      delay(DELAY_MS)
+      if (cycleInfo != null) {
+        delay(DELAY_MS)
+      }
       if (isStopping) return@launch
       // Double-check in case connection succeeded during delay
       val statusAfterDelay = connectionState.connection.firstOrNull()

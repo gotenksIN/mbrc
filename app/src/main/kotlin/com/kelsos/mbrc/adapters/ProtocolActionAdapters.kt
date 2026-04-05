@@ -26,7 +26,10 @@ import com.kelsos.mbrc.feature.widgets.WidgetUpdater
 import com.kelsos.mbrc.state.PlayingTrackCache
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okio.HashingSink
 import okio.blackholeSink
@@ -78,6 +81,9 @@ class TrackChangeNotifierImpl(
   private val appState: AppStatePublisher,
   private val dispatchers: AppCoroutineDispatchers
 ) : TrackChangeNotifier {
+
+  private val scope = CoroutineScope(SupervisorJob() + dispatchers.io)
+
   override fun notifyTrackChanged(track: TrackInfo) {
     widgetUpdater.updatePlayingTrack(track.toPlayingTrack())
   }
@@ -86,12 +92,14 @@ class TrackChangeNotifierImpl(
     widgetUpdater.updatePlayState(state)
   }
 
-  override suspend fun persistTrackInfo(track: TrackInfo) {
-    cache.persistInfo(track.toPlayingTrack())
+  override fun persistTrackInfo(track: TrackInfo) {
+    scope.launch {
+      cache.persistInfo(track.toPlayingTrack())
+    }
   }
 
-  override suspend fun requestTrackDetails() {
-    withContext(dispatchers.network) {
+  override fun requestTrackDetails() {
+    scope.launch(dispatchers.network) {
       runCatching {
         val details = playbackApi.getTrackDetails()
         appState.updateTrackDetails(details.toTrackDetails())
