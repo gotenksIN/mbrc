@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
     // Allow content to draw behind system bars
     WindowCompat.setDecorFitsSystemWindows(window, false)
     
+    @Suppress("DEPRECATION")
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       window.isStatusBarContrastEnforced = false
       window.isNavigationBarContrastEnforced = false

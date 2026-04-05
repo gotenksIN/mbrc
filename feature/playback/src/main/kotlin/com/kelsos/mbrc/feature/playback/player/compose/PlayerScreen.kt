@@ -243,13 +243,14 @@ fun PlayerScreen(
       },
       onOutputClick = { showOutputSelection = true },
       onRatingClick = { showBottomSheet = true },
+      albumArtState = topBarAlbumArtState,
       contentPadding = paddingValues
     )
   }
 }
 
 @Composable
-fun PlayerScreenContent(
+internal fun PlayerScreenContent(
   playingTrack: TrackInfo,
   playingPosition: PlayingPosition,
   trackRating: TrackRating,
@@ -264,20 +265,12 @@ fun PlayerScreenContent(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onRatingClick: () -> Unit,
+  albumArtState: AlbumArtState,
   contentPadding: PaddingValues = PaddingValues(),
   modifier: Modifier = Modifier
 ) {
   val configuration = LocalConfiguration.current
   val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-  val darkTheme = isSystemInDarkTheme()
-  val defaultBackground = MaterialTheme.colorScheme.background
-
-  // Load album art and extract colors - single image load shared with AlbumCover
-  val albumArtState = rememberAlbumArtState(
-    coverUrl = playingTrack.coverUrl,
-    defaultBackground = defaultBackground,
-    darkTheme = darkTheme
-  )
 
   // Animate color transitions smoothly when track changes
   val animatedDominant by animateColorAsState(
@@ -413,7 +406,7 @@ private object PlayerConstants {
 /**
  * Data class to hold colors extracted from album artwork.
  */
-private data class AlbumColors(
+internal data class AlbumColors(
   val dominant: Color,
   val vibrant: Color,
   val darkVibrant: Color,
@@ -468,14 +461,14 @@ private fun playerUiColorsFor(baseColor: Color): PlayerUiColors {
 /**
  * Data class to hold album art state including painter and extracted colors.
  */
-private data class AlbumArtState(val painter: AsyncImagePainter, val colors: AlbumColors)
+internal data class AlbumArtState(val painter: AsyncImagePainter, val colors: AlbumColors)
 
 /**
  * Remembers album art state including the painter and extracted colors.
  * This ensures the image is only loaded once and shared between display and color extraction.
  */
 @Composable
-private fun rememberAlbumArtState(
+internal fun rememberAlbumArtState(
   coverUrl: String,
   defaultBackground: Color,
   darkTheme: Boolean

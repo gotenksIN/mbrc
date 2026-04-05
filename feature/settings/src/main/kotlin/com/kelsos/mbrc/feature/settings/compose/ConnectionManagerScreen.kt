@@ -50,6 +50,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -246,9 +247,9 @@ private fun ConnectionList(
             connections[index]?.let { connection ->
               ConnectionItem(
                 connection = connection,
-                onEdit = { onEdit(connection) },
-                onDelete = { onDelete(connection) },
-                onSetDefault = { onSetDefault(connection) }
+                onEdit = remember(connection) { { onEdit(connection) } },
+                onDelete = remember(connection) { { onDelete(connection) } },
+                onSetDefault = remember(connection) { { onSetDefault(connection) } }
               )
             }
           }

@@ -24,7 +24,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,7 +49,7 @@ fun MiniControl(
   modifier: Modifier = Modifier,
   viewModel: MiniControlViewModel = koinViewModel()
 ) {
-  val state by viewModel.state.collectAsStateWithLifecycle(initialValue = MiniControlState())
+  val stateFlow = viewModel.state.collectAsStateWithLifecycle(initialValue = MiniControlState())
 
   LaunchedEffect(Unit) {
     viewModel.events.collect { event ->
@@ -60,7 +62,7 @@ fun MiniControl(
   }
 
   MiniControlContent(
-    state = state,
+    stateProvider = { stateFlow.value },
     onNavigateToPlayer = onNavigateToPlayer,
     onPreviousClick = { viewModel.perform(MiniControlAction.PlayPrevious) },
     onPlayPauseClick = { viewModel.perform(MiniControlAction.PlayPause) },
@@ -71,19 +73,15 @@ fun MiniControl(
 
 @Composable
 fun MiniControlContent(
-  state: MiniControlState,
+  stateProvider: () -> MiniControlState,
   onNavigateToPlayer: () -> Unit,
   onPreviousClick: () -> Unit,
   onPlayPauseClick: () -> Unit,
   onNextClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  val isStream = state.playingPosition.isStream
-  val progress = if (!isStream && state.playingPosition.total > 0) {
-    state.playingPosition.current.toFloat() / state.playingPosition.total.toFloat()
-  } else {
-    0f
-  }
+  val playingTrack by remember { derivedStateOf { stateProvider().playingTrack } }
+  val playingState by remember { derivedStateOf { stateProvider().playingState } }
 
   Surface(
     modifier = modifier.fillMaxWidth(),
@@ -92,7 +90,14 @@ fun MiniControlContent(
   ) {
     Column {
       LinearProgressIndicator(
-        progress = { progress },
+        progress = {
+          val position = stateProvider().playingPosition
+          if (!position.isStream && position.total > 0) {
+            position.current.toFloat() / position.total.toFloat()
+          } else {
+            0f
+          }
+        },
         modifier = Modifier
           .fillMaxWidth()
           .height(3.dp),
@@ -109,7 +114,7 @@ fun MiniControlContent(
         verticalAlignment = Alignment.CenterVertically
       ) {
         AsyncImage(
-          model = state.playingTrack.coverUrl.ifEmpty { null },
+          model = playingTrack.coverUrl.ifEmpty { null },
           contentDescription = stringResource(R.string.description_album_cover),
           modifier = Modifier
             .size(48.dp)
@@ -125,7 +130,7 @@ fun MiniControlContent(
           modifier = Modifier.weight(1f)
         ) {
           Text(
-            text = state.playingTrack.title.ifEmpty {
+            text = playingTrack.title.ifEmpty {
               stringResource(R.string.unknown_title)
             },
             style = MaterialTheme.typography.bodyMedium.copy(
@@ -136,7 +141,7 @@ fun MiniControlContent(
             overflow = TextOverflow.Ellipsis
           )
           Text(
-            text = state.playingTrack.artist.ifEmpty {
+            text = playingTrack.artist.ifEmpty {
               stringResource(R.string.unknown_artist)
             },
             style = MaterialTheme.typography.bodySmall.copy(
@@ -158,7 +163,7 @@ fun MiniControlContent(
 
         IconButton(onClick = onPlayPauseClick) {
           Icon(
-            imageVector = if (state.playingState == PlayerState.Playing) {
+            imageVector = if (playingState == PlayerState.Playing) {
               Icons.Default.Pause
             } else {
               Icons.Default.PlayArrow
