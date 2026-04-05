@@ -266,3 +266,15 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     db.execSQL("CREATE INDEX now_playing_date_added_idx ON now_playing (date_added)")
   }
 }
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+  override fun migrate(db: SupportSQLiteDatabase) {
+    db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_artist` ON `track` (`artist`)")
+    db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_album_artist` ON `track` (`album_artist`)")
+    db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_album` ON `track` (`album`)")
+    db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_genre` ON `track` (`genre`)")
+    db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_title` ON `track` (`title`)")
+  }
+}
+
+val ALL_MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5)
