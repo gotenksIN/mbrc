@@ -249,15 +249,19 @@ interface AlbumDao {
 
   @Transaction
   fun updateCovers(updated: List<AlbumCover>) {
-    for ((artist, album, hash) in updated) {
-      if (hash.isNullOrEmpty()) {
-        continue
-      }
-      updateCover(
-        artist = artist.orEmpty(),
-        album = album.orEmpty(),
-        cover = hash
-      )
+    val validUpdates = updated.filter { !it.hash.isNullOrEmpty() }
+    if (validUpdates.isEmpty()) return
+
+    val currentAlbums = all()
+    val albumMap = currentAlbums.associateBy { "${it.artist}_${it.album}" }
+
+    val entitiesToUpdate = validUpdates.mapNotNull { cover ->
+      val key = "${cover.artist.orEmpty()}_${cover.album.orEmpty()}"
+      albumMap[key]?.copy(cover = cover.hash)
+    }
+
+    if (entitiesToUpdate.isNotEmpty()) {
+      insert(entitiesToUpdate)
     }
   }
 

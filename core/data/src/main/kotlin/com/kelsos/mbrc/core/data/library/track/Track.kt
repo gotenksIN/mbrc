@@ -21,7 +21,7 @@ data class Track(
   val id: Long
 )
 
-@Entity(tableName = "track", indices = [Index("src", name = "track_src_index", unique = true)])
+@Entity(tableName = "track", indices = [Index("src"), Index("artist"), Index("album_artist"), Index("album"), Index("genre"), Index("title")])
 data class TrackEntity(
   @ColumnInfo
   val artist: String,

@@ -77,13 +77,14 @@ class AlbumRepositoryImpl(
   }) { it.toAlbum() }
 
   override suspend fun getRemote(progress: Progress?) {
+    val added = epoch()
+    val default = CachedAlbumCover(0, null)
+    val cached =
+      withContext(dispatchers.database) { dao.all() }.associate { entry ->
+        entry.album + entry.artist to CachedAlbumCover(entry.id, entry.cover)
+      }
+
     withContext(dispatchers.network) {
-      val added = epoch()
-      val default = CachedAlbumCover(0, null)
-      val cached =
-        dao.all().associate { entry ->
-          entry.album + entry.artist to CachedAlbumCover(entry.id, entry.cover)
-        }
       val allPages = libraryApi.getAlbums(progress)
 
       allPages
@@ -136,10 +137,10 @@ class AlbumRepositoryImpl(
   }) { it.toAlbum() }
 
   override suspend fun updateCovers(updated: List<AlbumCover>) {
-    dao.updateCovers(updated)
+    withContext(dispatchers.database) { dao.updateCovers(updated) }
   }
 
-  override suspend fun getCovers(): List<AlbumCover> = dao.getCovers()
+  override suspend fun getCovers(): List<AlbumCover> = withContext(dispatchers.database) { dao.getCovers() }
 
   override suspend fun getById(id: Long): Album? {
     return withContext(dispatchers.database) {

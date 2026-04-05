@@ -128,30 +128,32 @@ class TrackRepositoryImpl(
     }
   }) { it.toTrack() }
 
-  override fun getTrackPaths(query: TrackQuery): List<String> = when (query) {
-    is TrackQuery.All -> dao.getAllTrackPaths()
-    is TrackQuery.Genre -> dao.getGenreTrackPaths(query.genre)
-    is TrackQuery.Artist -> dao.getArtistTrackPaths(query.artist)
-    is TrackQuery.Album -> dao.getAlbumTrackPaths(query.album, query.artist)
-    is TrackQuery.Search -> when (query.field) {
-      TrackSortField.TITLE -> when (query.order) {
-        SortOrder.ASC -> dao.searchTrackPathsByTitleAsc(query.term)
-        SortOrder.DESC -> dao.searchTrackPathsByTitleDesc(query.term)
-      }
+  override suspend fun getTrackPaths(query: TrackQuery): List<String> = withContext(dispatchers.database) {
+    when (query) {
+      is TrackQuery.All -> dao.getAllTrackPaths()
+      is TrackQuery.Genre -> dao.getGenreTrackPaths(query.genre)
+      is TrackQuery.Artist -> dao.getArtistTrackPaths(query.artist)
+      is TrackQuery.Album -> dao.getAlbumTrackPaths(query.album, query.artist)
+      is TrackQuery.Search -> when (query.field) {
+        TrackSortField.TITLE -> when (query.order) {
+          SortOrder.ASC -> dao.searchTrackPathsByTitleAsc(query.term)
+          SortOrder.DESC -> dao.searchTrackPathsByTitleDesc(query.term)
+        }
 
-      TrackSortField.ARTIST -> when (query.order) {
-        SortOrder.ASC -> dao.searchTrackPathsByArtistAsc(query.term)
-        SortOrder.DESC -> dao.searchTrackPathsByArtistDesc(query.term)
-      }
+        TrackSortField.ARTIST -> when (query.order) {
+          SortOrder.ASC -> dao.searchTrackPathsByArtistAsc(query.term)
+          SortOrder.DESC -> dao.searchTrackPathsByArtistDesc(query.term)
+        }
 
-      TrackSortField.ALBUM -> when (query.order) {
-        SortOrder.ASC -> dao.searchTrackPathsByAlbumAsc(query.term)
-        SortOrder.DESC -> dao.searchTrackPathsByAlbumDesc(query.term)
-      }
+        TrackSortField.ALBUM -> when (query.order) {
+          SortOrder.ASC -> dao.searchTrackPathsByAlbumAsc(query.term)
+          SortOrder.DESC -> dao.searchTrackPathsByAlbumDesc(query.term)
+        }
 
-      TrackSortField.ALBUM_ARTIST -> when (query.order) {
-        SortOrder.ASC -> dao.searchTrackPathsByAlbumArtistAsc(query.term)
-        SortOrder.DESC -> dao.searchTrackPathsByAlbumArtistDesc(query.term)
+        TrackSortField.ALBUM_ARTIST -> when (query.order) {
+          SortOrder.ASC -> dao.searchTrackPathsByAlbumArtistAsc(query.term)
+          SortOrder.DESC -> dao.searchTrackPathsByAlbumArtistDesc(query.term)
+        }
       }
     }
   }

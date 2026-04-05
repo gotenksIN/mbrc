@@ -31,7 +31,7 @@ sealed class PagingTrackQuery {
 interface TrackRepository : Repository<Track> {
   fun getTracks(query: PagingTrackQuery): Flow<PagingData<Track>>
 
-  fun getTrackPaths(query: TrackQuery): List<String>
+  suspend fun getTrackPaths(query: TrackQuery): List<String>
 
   suspend fun getByPath(path: String): Track?
 

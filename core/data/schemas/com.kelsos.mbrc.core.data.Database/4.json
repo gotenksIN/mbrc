@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "8ebacc84a15470be757e3f4631e9cf63",
+    "identityHash": "f30c25caaad66763d747f4e3d187d6a6",
     "entities": [
       {
         "tableName": "genre",
@@ -224,13 +224,58 @@
         },
         "indices": [
           {
-            "name": "track_src_index",
-            "unique": true,
+            "name": "index_track_src",
+            "unique": false,
             "columnNames": [
               "src"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `track_src_index` ON `${TABLE_NAME}` (`src`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_track_src` ON `${TABLE_NAME}` (`src`)"
+          },
+          {
+            "name": "index_track_artist",
+            "unique": false,
+            "columnNames": [
+              "artist"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_track_artist` ON `${TABLE_NAME}` (`artist`)"
+          },
+          {
+            "name": "index_track_album_artist",
+            "unique": false,
+            "columnNames": [
+              "album_artist"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_track_album_artist` ON `${TABLE_NAME}` (`album_artist`)"
+          },
+          {
+            "name": "index_track_album",
+            "unique": false,
+            "columnNames": [
+              "album"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_track_album` ON `${TABLE_NAME}` (`album`)"
+          },
+          {
+            "name": "index_track_genre",
+            "unique": false,
+            "columnNames": [
+              "genre"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_track_genre` ON `${TABLE_NAME}` (`genre`)"
+          },
+          {
+            "name": "index_track_title",
+            "unique": false,
+            "columnNames": [
+              "title"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_track_title` ON `${TABLE_NAME}` (`title`)"
           }
         ]
       },
@@ -452,7 +497,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8ebacc84a15470be757e3f4631e9cf63')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f30c25caaad66763d747f4e3d187d6a6')"
     ]
   }
 }
