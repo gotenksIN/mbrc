@@ -95,6 +95,7 @@ fun LyricsScreenContent(
   onSeek: (Float) -> Unit
 ) {
   val lyricTimestamps = remember(lyrics) { lyrics.map(::leadingTimestampMs) }
+  val displayLyrics = remember(lyrics) { lyrics.map { it.removeLeadingTimestamp().trim() } }
   val hasSyncedLyrics = remember(lyricTimestamps) { lyricTimestamps.any { it != null } }
   val activeLineIndex = remember(lyricTimestamps, playingPosition.current) {
     findActiveLyricIndex(lyricTimestamps, playingPosition.current)
@@ -141,7 +142,7 @@ fun LyricsScreenContent(
           contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
           verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-          itemsIndexed(lyrics) { index, line ->
+          itemsIndexed(displayLyrics) { index, line ->
             val timestamp = lyricTimestamps[index]
             LyricsLine(
               text = line,
@@ -231,14 +232,12 @@ private fun LyricsLine(
   onClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier
 ) {
-  val displayText = text.removeLeadingTimestamp().trim()
-
-  if (displayText.isBlank()) {
+  if (text.isBlank()) {
     // Spacer for empty lines (verse breaks)
     Spacer(modifier = modifier.height(16.dp))
   } else {
     Text(
-      text = displayText,
+      text = text,
       style = MaterialTheme.typography.headlineSmall.copy(
         fontWeight = if (isActive) FontWeight.Black else FontWeight.Bold,
         lineHeight = 32.sp

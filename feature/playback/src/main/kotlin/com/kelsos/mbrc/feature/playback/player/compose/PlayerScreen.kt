@@ -653,6 +653,7 @@ private fun ReplaceCoverLyricsPanel(
 ) {
   val uiColors = LocalPlayerUiColors.current
   val lyricTimestamps = remember(lyrics) { lyrics.map(::leadingTimestampMs) }
+  val displayLyrics = remember(lyrics) { lyrics.map { it.removeLeadingTimestamp().trim() } }
   val activeLineIndex = remember(lyricTimestamps, playingPosition.current) {
     findActiveLyricIndex(lyricTimestamps, playingPosition.current)
   }
@@ -688,8 +689,7 @@ private fun ReplaceCoverLyricsPanel(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 48.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
       ) {
-        itemsIndexed(lyrics) { index, line ->
-          val displayText = line.removeLeadingTimestamp().trim()
+        itemsIndexed(displayLyrics) { index, displayText ->
           val timestamp = lyricTimestamps[index]
           if (displayText.isBlank()) {
             Spacer(modifier = Modifier.height(18.dp))
