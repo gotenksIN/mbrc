@@ -195,7 +195,7 @@ class CoverHandlerImpl(
       }
 
     val extension = file.extension
-    val newFile = File(app.filesDir, "$md5.$extension")
+    val newFile = File(coverDir, "$md5.$extension")
     if (newFile.exists()) {
       val isDeleted = file.delete()
       if (!isDeleted) {
