@@ -175,17 +175,17 @@ private fun DrawerHeader(
 ) {
   val isDarkTheme = isSystemInDarkTheme()
 
-  // Subtler gradient - less contrast between top and bottom
-  val gradientColors = remember(isDarkTheme) {
+  val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+  val gradientColors = remember(isDarkTheme, primaryContainer) {
     if (isDarkTheme) {
       listOf(
-        drawer_header_gradient_top_dark.copy(alpha = 0.9f),
-        drawer_header_gradient_top_dark.copy(alpha = 0.7f)
+        primaryContainer.copy(alpha = 0.9f),
+        primaryContainer.copy(alpha = 0.7f)
       )
     } else {
       listOf(
-        drawer_header_gradient_top_light,
-        drawer_header_gradient_top_light.copy(alpha = 0.85f)
+        primaryContainer,
+        primaryContainer.copy(alpha = 0.85f)
       )
     }
   }
