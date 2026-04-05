@@ -8,7 +8,9 @@ import com.kelsos.mbrc.core.networking.protocol.base.Protocol
 import com.kelsos.mbrc.core.networking.protocol.usecases.UserActionUseCase
 import com.kelsos.mbrc.core.networking.protocol.usecases.VolumeModifyUseCase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MediaIntentHandler(
@@ -19,6 +21,7 @@ class MediaIntentHandler(
   private val scope = CoroutineScope(SupervisorJob() + dispatchers.main)
 
   private var previousClick: Long = 0
+  private var clickJob: Job? = null
 
   private fun getKeyEventFromIntent(mediaIntent: Intent?): KeyEvent? {
     val action = mediaIntent?.action
@@ -38,10 +41,16 @@ class MediaIntentHandler(
   private fun detectDoubleClick(): Boolean {
     val currentClick = System.currentTimeMillis()
     if (currentClick - previousClick < DOUBLE_CLICK_INTERVAL) {
+      clickJob?.cancel()
+      previousClick = 0
       return postAction(UserAction(Protocol.PlayerNext, true))
     }
     previousClick = currentClick
-    return postAction(UserAction(Protocol.PlayerPlayPause, true))
+    clickJob = scope.launch {
+      delay(300)
+      postAction(UserAction(Protocol.PlayerPlayPause, true))
+    }
+    return true
   }
 
   fun handleMediaIntent(mediaIntent: Intent?): Boolean {

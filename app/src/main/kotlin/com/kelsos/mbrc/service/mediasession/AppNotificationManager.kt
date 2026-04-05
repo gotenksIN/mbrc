@@ -18,6 +18,7 @@ import com.kelsos.mbrc.core.common.state.TrackInfo
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.platform.mediasession.NotificationData
 import com.kelsos.mbrc.core.platform.state.toPlayingTrack
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -86,12 +87,14 @@ class AppNotificationManagerImpl(
         } else {
           val uri = coverUrl.toUri()
           runCatching {
-            decodeFile(
-              checkNotNull(uri.path),
-              BitmapFactory.Options().apply {
-                inPreferredConfig = Config.RGB_565
-              }
-            )
+            withContext(Dispatchers.IO) {
+              decodeFile(
+                checkNotNull(uri.path),
+                BitmapFactory.Options().apply {
+                  inPreferredConfig = Config.RGB_565
+                }
+              )
+            }
           }.getOrNull()
         }
       notificationData = notificationData.copy(track = playingTrack.toPlayingTrack(), cover = cover)

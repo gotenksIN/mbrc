@@ -87,13 +87,18 @@ class NotificationActionReceiver(
   }
 
   private fun handleRinging() {
+    val pendingResult = goAsync()
     scope.launch {
-      val callAction = settingsManager.incomingCallActionFlow.first()
-      when (callAction) {
-        CallAction.Pause -> performAction(Protocol.PlayerPause)
-        CallAction.Stop -> performAction(Protocol.PlayerStop)
-        CallAction.Reduce -> volumeModifyUseCase.reduceVolume()
-        else -> Timber.v("No call action set, nothing to do.")
+      try {
+        val callAction = settingsManager.incomingCallActionFlow.first()
+        when (callAction) {
+          CallAction.Pause -> performAction(Protocol.PlayerPause)
+          CallAction.Stop -> performAction(Protocol.PlayerStop)
+          CallAction.Reduce -> volumeModifyUseCase.reduceVolume()
+          else -> Timber.v("No call action set, nothing to do.")
+        }
+      } finally {
+        pendingResult.finish()
       }
     }
   }
