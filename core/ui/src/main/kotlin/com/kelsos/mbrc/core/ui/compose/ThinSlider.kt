@@ -32,6 +32,7 @@ fun ThinSlider(
   value: Float,
   onValueChange: (Float) -> Unit,
   modifier: Modifier = Modifier,
+  enabled: Boolean = true,
   onValueChangeFinished: (() -> Unit)? = null,
   trackColor: Color = MaterialTheme.colorScheme.primary,
   inactiveTrackColor: Color = trackColor.copy(alpha = 0.3f),
@@ -49,6 +50,7 @@ fun ThinSlider(
     value = value,
     onValueChange = onValueChange,
     onValueChangeFinished = onValueChangeFinished,
+    enabled = enabled,
     modifier = modifier.height(height),
     colors = sliderColors,
     thumb = {

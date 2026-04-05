@@ -4,11 +4,11 @@ import androidx.compose.runtime.Stable
 
 @Stable
 data class PlayingPosition(val current: Duration = 0, val total: Duration = 0) {
-  /** True if this is a stream with unknown duration (total == -1) */
-  val isStream: Boolean get() = total < 0
+  /** True if this is a stream with unknown duration (total <= 0) */
+  val isStream: Boolean get() = total <= 0
 
-  val totalMinutes: String get() = if (isStream) current.toMinutes() else total.toMinutes()
-  val currentMinutes: String get() = current.toMinutes()
+  val totalMinutes: String get() = if (isStream) "00:00" else total.toMinutes()
+  val currentMinutes: String get() = if (isStream) "00:00" else current.toMinutes()
 
   fun progress(): String = "$currentMinutes / $totalMinutes"
 }

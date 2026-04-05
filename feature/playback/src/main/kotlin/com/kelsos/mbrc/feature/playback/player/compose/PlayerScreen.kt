@@ -104,7 +104,6 @@ import com.kelsos.mbrc.core.ui.R as CoreUiR
 import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.ThinSlider
 import com.kelsos.mbrc.core.ui.compose.TopBarState
-import com.kelsos.mbrc.core.ui.compose.WaveProgressIndicator
 import com.kelsos.mbrc.feature.misc.output.compose.OutputSelectionBottomSheet
 import com.kelsos.mbrc.feature.playback.R
 import com.kelsos.mbrc.feature.playback.lyrics.LyricsViewModel

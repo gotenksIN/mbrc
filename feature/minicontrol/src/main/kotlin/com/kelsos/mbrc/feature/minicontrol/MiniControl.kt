@@ -38,7 +38,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.ui.R as CoreUiR
-import com.kelsos.mbrc.core.ui.compose.WaveProgressIndicator
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -92,27 +91,15 @@ fun MiniControlContent(
     color = MaterialTheme.colorScheme.surfaceVariant
   ) {
     Column {
-      if (isStream) {
-        // Wiggly wave progress for streams
-        WaveProgressIndicator(
-          modifier = Modifier.fillMaxWidth(),
-          color = MaterialTheme.colorScheme.primary,
-          backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-          height = 6.dp,
-          waveAmplitude = 1.dp,
-          strokeWidth = 2.dp
-        )
-      } else {
-        LinearProgressIndicator(
-          progress = { progress },
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(3.dp),
-          trackColor = MaterialTheme.colorScheme.surfaceVariant,
-          gapSize = 0.dp,
-          drawStopIndicator = {}
-        )
-      }
+      LinearProgressIndicator(
+        progress = { progress },
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(3.dp),
+        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+        gapSize = 0.dp,
+        drawStopIndicator = {}
+      )
 
       Row(
         modifier = Modifier

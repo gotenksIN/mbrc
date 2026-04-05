@@ -308,29 +308,22 @@ private fun LyricsFooter(
   ) {
     val sliderColor = MaterialTheme.colorScheme.onPrimary
 
-    if (isStream) {
-      // For streams, show wiggly wave indicator (not seekable)
-      WaveProgressIndicator(
-        modifier = Modifier.fillMaxWidth(),
-        color = sliderColor,
-        backgroundColor = sliderColor.copy(alpha = 0.3f)
-      )
-    } else {
-      ThinSlider(
-        value = if (isSeeking) seekPosition else progress,
-        onValueChange = { newValue ->
-          seekPosition = newValue
-          isSeeking = true
-        },
-        onValueChangeFinished = {
-          onSeek(seekPosition * playingPosition.total)
-          isSeeking = false
-        },
-        modifier = Modifier.fillMaxWidth(),
-        trackColor = sliderColor,
-        thumbColor = sliderColor
-      )
-    }
+    ThinSlider(
+      value = if (isSeeking) seekPosition else progress,
+      onValueChange = { newValue ->
+        seekPosition = newValue
+        isSeeking = true
+      },
+      onValueChangeFinished = {
+        onSeek(seekPosition * playingPosition.total)
+        isSeeking = false
+      },
+      enabled = !isStream,
+      modifier = Modifier.fillMaxWidth(),
+      trackColor = sliderColor,
+      inactiveTrackColor = sliderColor.copy(alpha = 0.3f),
+      thumbColor = sliderColor
+    )
 
     // Time display
     Row(
