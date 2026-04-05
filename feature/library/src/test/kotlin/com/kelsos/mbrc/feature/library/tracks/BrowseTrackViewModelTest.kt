@@ -227,9 +227,10 @@ class BrowseTrackViewModelTest : KoinTest {
   }
 
   @Test
-  fun queueShouldUseFullLibraryContextWhenSearchIsActive() {
+  fun queueShouldUseSearchContextWhenSearchIsActive() {
     runTest(testDispatcher) {
       every { librarySettings.libraryTrackDefaultActionFlow } returns flowOf(TrackAction.PlayNowQueueAll)
+      searchTermFlow.value = "Test"
       val track =
         Track(
           id = 1,
@@ -246,11 +247,11 @@ class BrowseTrackViewModelTest : KoinTest {
       val queueResult = Outcome.Success(10)
 
       coEvery {
-        queueHandler.queueTrack(track = track, type = Queue.AddAll, queueFullLibrary = true)
+        queueHandler.queueTrack(track = track, type = Queue.AddAll, searchTerm = "Test")
       } returns queueResult
 
       viewModel.events.test {
-        viewModel.queue(Queue.Default, track, queueFullLibrary = true)
+        viewModel.queue(Queue.Default, track)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val event = awaitItem()
@@ -258,7 +259,7 @@ class BrowseTrackViewModelTest : KoinTest {
       }
 
       coVerify(exactly = 1) {
-        queueHandler.queueTrack(track = track, type = Queue.AddAll, queueFullLibrary = true)
+        queueHandler.queueTrack(track = track, type = Queue.AddAll, searchTerm = "Test")
       }
     }
   }

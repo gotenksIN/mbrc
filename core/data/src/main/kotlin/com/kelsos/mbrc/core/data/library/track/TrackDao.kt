@@ -86,6 +86,98 @@ interface TrackDao {
   )
   fun getAllTrackPaths(): List<String>
 
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by title collate nocase asc
+    """
+  )
+  fun searchTrackPathsByTitleAsc(term: String): List<String>
+
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by title collate nocase desc
+    """
+  )
+  fun searchTrackPathsByTitleDesc(term: String): List<String>
+
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by
+      CASE
+        WHEN LOWER(artist) LIKE 'the %' THEN SUBSTR(artist, 5)
+        ELSE artist
+      END COLLATE NOCASE ASC,
+      album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun searchTrackPathsByArtistAsc(term: String): List<String>
+
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by
+      CASE
+        WHEN LOWER(artist) LIKE 'the %' THEN SUBSTR(artist, 5)
+        ELSE artist
+      END COLLATE NOCASE DESC,
+      album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun searchTrackPathsByArtistDesc(term: String): List<String>
+
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun searchTrackPathsByAlbumAsc(term: String): List<String>
+
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by album collate nocase desc, disc asc, trackno asc
+    """
+  )
+  fun searchTrackPathsByAlbumDesc(term: String): List<String>
+
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by
+      CASE
+        WHEN LOWER(album_artist) LIKE 'the %' THEN SUBSTR(album_artist, 5)
+        ELSE album_artist
+      END COLLATE NOCASE ASC,
+      album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun searchTrackPathsByAlbumArtistAsc(term: String): List<String>
+
+  @Query(
+    """
+    select src from track
+    where title LIKE '%' || :term || '%' OR artist LIKE '%' || :term || '%'
+    order by
+      CASE
+        WHEN LOWER(album_artist) LIKE 'the %' THEN SUBSTR(album_artist, 5)
+        ELSE album_artist
+      END COLLATE NOCASE DESC,
+      album collate nocase asc, disc asc, trackno asc
+    """
+  )
+  fun searchTrackPathsByAlbumArtistDesc(term: String): List<String>
+
   @Query("select count(*) from track")
   fun count(): Long
 

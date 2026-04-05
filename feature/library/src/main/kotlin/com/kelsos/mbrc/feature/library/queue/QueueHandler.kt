@@ -131,7 +131,7 @@ class QueueHandler(
     track: Track,
     type: Queue,
     queueAlbum: Boolean = false,
-    queueFullLibrary: Boolean = false
+    searchTerm: String? = null
   ): Outcome<Int> {
     val trackSource: List<String>
     val path: String?
@@ -139,9 +139,18 @@ class QueueHandler(
     trackSource = withContext(dispatchers.database) {
       when (type) {
         Queue.AddAll -> {
+          val trackSortPreference = settings.trackSortPreferenceFlow.first()
           path = track.src
           if (queueAlbum) {
             trackRepository.getTrackPaths(TrackQuery.Album(track.album, track.albumArtist))
+          } else if (!searchTerm.isNullOrBlank()) {
+            trackRepository.getTrackPaths(
+              TrackQuery.Search(
+                term = searchTerm,
+                field = trackSortPreference.field,
+                order = trackSortPreference.order
+              )
+            )
           } else {
             trackRepository.getTrackPaths(TrackQuery.All)
           }

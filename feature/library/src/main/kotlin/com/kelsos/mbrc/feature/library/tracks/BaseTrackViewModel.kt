@@ -18,11 +18,12 @@ abstract class BaseTrackViewModel(
 ) : BaseLibraryViewModel<TrackUiMessage>(librarySettings, connectionStateFlow) {
   abstract val tracks: Flow<PagingData<Track>>
 
+  protected open fun currentSearchTerm(): String? = null
+
   fun queue(
     action: Queue,
     track: Track,
-    queueAlbum: Boolean = false,
-    queueFullLibrary: Boolean = false
+    queueAlbum: Boolean = false
   ) {
     viewModelScope.launch {
       if (!checkConnection()) {
@@ -35,7 +36,7 @@ abstract class BaseTrackViewModel(
         track = track,
         type = queueAction,
         queueAlbum = queueAlbum,
-        queueFullLibrary = queueFullLibrary
+        searchTerm = currentSearchTerm()
       )
 
       val message =

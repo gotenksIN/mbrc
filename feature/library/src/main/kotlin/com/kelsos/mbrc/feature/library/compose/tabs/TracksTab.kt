@@ -51,7 +51,6 @@ fun TracksTab(
   viewModel: BrowseTrackViewModel = koinViewModel()
 ) {
   val tracks = viewModel.tracks.collectAsLazyPagingItems()
-  val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val showSync by viewModel.showSync.collectAsStateWithLifecycle(initialValue = true)
   val sortPreference by viewModel.sortPreference.collectAsStateWithLifecycle(
     initialValue = SortPreference(TrackSortField.TITLE, SortOrder.ASC)
@@ -112,12 +111,8 @@ fun TracksTab(
   ) { track ->
     TrackListItem(
       track = track,
-      onClick = {
-        viewModel.queue(Queue.Default, track, queueFullLibrary = searchQuery.isNotEmpty())
-      },
-      onQueue = { queue ->
-        viewModel.queue(queue, track, queueFullLibrary = searchQuery.isNotEmpty())
-      }
+      onClick = { viewModel.queue(Queue.Default, track) },
+      onQueue = { queue -> viewModel.queue(queue, track) }
     )
   }
 

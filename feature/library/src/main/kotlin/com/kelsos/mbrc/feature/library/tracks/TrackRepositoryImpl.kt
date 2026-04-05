@@ -133,6 +133,27 @@ class TrackRepositoryImpl(
     is TrackQuery.Genre -> dao.getGenreTrackPaths(query.genre)
     is TrackQuery.Artist -> dao.getArtistTrackPaths(query.artist)
     is TrackQuery.Album -> dao.getAlbumTrackPaths(query.album, query.artist)
+    is TrackQuery.Search -> when (query.field) {
+      TrackSortField.TITLE -> when (query.order) {
+        SortOrder.ASC -> dao.searchTrackPathsByTitleAsc(query.term)
+        SortOrder.DESC -> dao.searchTrackPathsByTitleDesc(query.term)
+      }
+
+      TrackSortField.ARTIST -> when (query.order) {
+        SortOrder.ASC -> dao.searchTrackPathsByArtistAsc(query.term)
+        SortOrder.DESC -> dao.searchTrackPathsByArtistDesc(query.term)
+      }
+
+      TrackSortField.ALBUM -> when (query.order) {
+        SortOrder.ASC -> dao.searchTrackPathsByAlbumAsc(query.term)
+        SortOrder.DESC -> dao.searchTrackPathsByAlbumDesc(query.term)
+      }
+
+      TrackSortField.ALBUM_ARTIST -> when (query.order) {
+        SortOrder.ASC -> dao.searchTrackPathsByAlbumArtistAsc(query.term)
+        SortOrder.DESC -> dao.searchTrackPathsByAlbumArtistDesc(query.term)
+      }
+    }
   }
 
   override suspend fun getById(id: Long): Track? {

@@ -26,6 +26,8 @@ class BrowseTrackViewModel(
   private val librarySettings: LibrarySettings,
   connectionStateFlow: ConnectionStateFlow
 ) : BaseTrackViewModel(queueHandler, librarySettings, connectionStateFlow) {
+  override fun currentSearchTerm(): String? = searchModel.currentTerm.value.takeIf { it.isNotBlank() }
+
   val searchQuery: StateFlow<String> = searchModel.currentTerm
   val sortPreference: Flow<TrackSortPreference> = librarySettings.trackSortPreferenceFlow
 

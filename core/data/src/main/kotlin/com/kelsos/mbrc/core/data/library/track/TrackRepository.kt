@@ -13,6 +13,12 @@ sealed class TrackQuery {
 
   data class Artist(val artist: String) : TrackQuery()
 
+  data class Search(
+    val term: String,
+    val field: TrackSortField,
+    val order: SortOrder
+  ) : TrackQuery()
+
   object All : TrackQuery()
 }
 
