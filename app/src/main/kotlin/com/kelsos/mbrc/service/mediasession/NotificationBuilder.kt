@@ -1,6 +1,7 @@
 package com.kelsos.mbrc.service.mediasession
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
@@ -23,6 +24,10 @@ class NotificationBuilder(
   private val context: Context,
   private val intentBuilder: MediaIntentBuilder
 ) {
+  private val defaultCoverArt: Bitmap by lazy(LazyThreadSafetyMode.NONE) {
+    BitmapFactory.decodeResource(context.resources, CoreUiR.drawable.ic_image_no_cover)
+  }
+
   /**
    * Creates a notification builder for the given notification data and media session.
    *
@@ -52,8 +57,7 @@ class NotificationBuilder(
     if (notificationData.cover != null) {
       builder.setLargeIcon(notificationData.cover)
     } else {
-      val icon = BitmapFactory.decodeResource(context.resources, CoreUiR.drawable.ic_image_no_cover)
-      builder.setLargeIcon(icon)
+      builder.setLargeIcon(defaultCoverArt)
     }
 
     with(notificationData.track) {
