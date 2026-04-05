@@ -58,6 +58,7 @@ fun ScaffoldTopBar(
   actionItems: List<ActionItem>,
   menuItems: List<MenuItem>,
   isTransparent: Boolean,
+  contentColor: Color? = null,
   defaultTitle: String,
   onOpenDrawer: () -> Unit,
   onOverflowClick: (() -> Unit)? = null
@@ -69,6 +70,7 @@ fun ScaffoldTopBar(
       actionItems = actionItems,
       menuItems = menuItems,
       isTransparent = isTransparent,
+      contentColor = contentColor,
       onOpenDrawer = onOpenDrawer,
       onOverflowClick = onOverflowClick
     )
@@ -83,6 +85,7 @@ fun ScaffoldTopBar(
       actionItems = actionItems,
       menuItems = menuItems,
       isTransparent = isTransparent,
+      contentColor = contentColor,
       onOpenDrawer = onOpenDrawer,
       onOverflowClick = onOverflowClick
     )
@@ -92,7 +95,8 @@ fun ScaffoldTopBar(
       placeholder = state.placeholder,
       onQueryChange = state.onQueryChange,
       onSearch = state.onSearch,
-      onClose = state.onClose
+      onClose = state.onClose,
+      contentColor = contentColor
     )
 
     is TopBarState.WithProgress -> ProgressTopBar(
@@ -102,6 +106,7 @@ fun ScaffoldTopBar(
       navigationIcon = navigationIcon,
       actionItems = actionItems,
       menuItems = menuItems,
+      contentColor = contentColor,
       onOpenDrawer = onOpenDrawer,
       onOverflowClick = onOverflowClick
     )
@@ -116,9 +121,29 @@ private fun DefaultTopBar(
   actionItems: List<ActionItem>,
   menuItems: List<MenuItem>,
   isTransparent: Boolean,
+  contentColor: Color? = null,
   onOpenDrawer: () -> Unit,
   onOverflowClick: (() -> Unit)? = null
 ) {
+  val defaultColors = if (isTransparent) {
+    TopAppBarDefaults.topAppBarColors(
+      containerColor = Color.Transparent,
+      scrolledContainerColor = Color.Transparent
+    )
+  } else {
+    TopAppBarDefaults.topAppBarColors()
+  }
+
+  val finalColors = if (contentColor != null) {
+    defaultColors.copy(
+      titleContentColor = contentColor,
+      navigationIconContentColor = contentColor,
+      actionIconContentColor = contentColor
+    )
+  } else {
+    defaultColors
+  }
+
   TopAppBar(
     title = {
       Text(
@@ -127,7 +152,7 @@ private fun DefaultTopBar(
       )
     },
     navigationIcon = {
-      NavigationIconContent(navigationIcon, onOpenDrawer)
+      NavigationIconContent(navigationIcon, onOpenDrawer, contentColor)
     },
     actions = {
       // Render action items first
@@ -135,21 +160,15 @@ private fun DefaultTopBar(
         IconButton(onClick = action.onClick) {
           Icon(
             imageVector = action.icon,
-            contentDescription = action.contentDescription
+            contentDescription = action.contentDescription,
+            tint = contentColor ?: androidx.compose.material3.LocalContentColor.current
           )
         }
       }
       // Then the overflow menu
-      MenuDropdown(menuItems, onOverflowClick)
+      MenuDropdown(menuItems, onOverflowClick, contentColor)
     },
-    colors = if (isTransparent) {
-      TopAppBarDefaults.topAppBarColors(
-        containerColor = Color.Transparent,
-        scrolledContainerColor = Color.Transparent
-      )
-    } else {
-      TopAppBarDefaults.topAppBarColors()
-    }
+    colors = finalColors
   )
 }
 
@@ -160,7 +179,8 @@ private fun SearchTopBar(
   placeholder: String,
   onQueryChange: (String) -> Unit,
   onSearch: () -> Unit,
-  onClose: () -> Unit
+  onClose: () -> Unit,
+  contentColor: Color? = null
 ) {
   val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -182,7 +202,9 @@ private fun SearchTopBar(
           focusedContainerColor = Color.Transparent,
           unfocusedContainerColor = Color.Transparent,
           focusedIndicatorColor = Color.Transparent,
-          unfocusedIndicatorColor = Color.Transparent
+          unfocusedIndicatorColor = Color.Transparent,
+          focusedTextColor = contentColor ?: androidx.compose.material3.LocalContentColor.current,
+          unfocusedTextColor = contentColor ?: androidx.compose.material3.LocalContentColor.current
         ),
         modifier = Modifier.fillMaxWidth()
       )
@@ -191,7 +213,8 @@ private fun SearchTopBar(
       IconButton(onClick = onClose) {
         Icon(
           imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-          contentDescription = stringResource(R.string.action_search_clear)
+          contentDescription = stringResource(R.string.action_search_clear),
+          tint = contentColor ?: androidx.compose.material3.LocalContentColor.current
         )
       }
     },
@@ -200,10 +223,14 @@ private fun SearchTopBar(
         IconButton(onClick = { onQueryChange("") }) {
           Icon(
             imageVector = Icons.Default.Clear,
-            contentDescription = stringResource(R.string.action_search_clear)
+            contentDescription = stringResource(R.string.action_search_clear),
+            tint = contentColor ?: androidx.compose.material3.LocalContentColor.current
           )
         }
       }
+    },
+    colors = TopAppBarDefaults.topAppBarColors().let {
+        if (contentColor != null) it.copy(actionIconContentColor = contentColor, navigationIconContentColor = contentColor, titleContentColor = contentColor) else it
     }
   )
 }
@@ -217,6 +244,7 @@ private fun ProgressTopBar(
   navigationIcon: NavigationIconType,
   actionItems: List<ActionItem>,
   menuItems: List<MenuItem>,
+  contentColor: Color? = null,
   onOpenDrawer: () -> Unit,
   onOverflowClick: (() -> Unit)? = null
 ) {
@@ -226,6 +254,9 @@ private fun ProgressTopBar(
   )
 
   Column {
+    val colors = TopAppBarDefaults.topAppBarColors().let {
+        if (contentColor != null) it.copy(actionIconContentColor = contentColor, navigationIconContentColor = contentColor, titleContentColor = contentColor) else it
+    }
     TopAppBar(
       title = {
         Text(
@@ -234,7 +265,7 @@ private fun ProgressTopBar(
         )
       },
       navigationIcon = {
-        NavigationIconContent(navigationIcon, onOpenDrawer)
+        NavigationIconContent(navigationIcon, onOpenDrawer, contentColor)
       },
       actions = {
         // Render action items first
@@ -242,13 +273,15 @@ private fun ProgressTopBar(
           IconButton(onClick = action.onClick) {
             Icon(
               imageVector = action.icon,
-              contentDescription = action.contentDescription
+              contentDescription = action.contentDescription,
+              tint = contentColor ?: androidx.compose.material3.LocalContentColor.current
             )
           }
         }
         // Then the overflow menu
-        MenuDropdown(menuItems, onOverflowClick)
-      }
+        MenuDropdown(menuItems, onOverflowClick, contentColor)
+      },
+      colors = colors
     )
 
     AnimatedVisibility(
@@ -270,6 +303,7 @@ private fun ProgressTopBar(
           Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
+            color = contentColor ?: Color.Unspecified,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
           )
         }
@@ -279,16 +313,16 @@ private fun ProgressTopBar(
 }
 
 @Composable
-private fun NavigationIconContent(navigationIcon: NavigationIconType, onOpenDrawer: () -> Unit) {
+private fun NavigationIconContent(navigationIcon: NavigationIconType, onOpenDrawer: () -> Unit, contentColor: Color? = null) {
   when (navigationIcon) {
-    NavigationIconType.Drawer -> DrawerNavigationIcon(onClick = onOpenDrawer)
-    is NavigationIconType.Back -> BackNavigationIcon(onClick = navigationIcon.onBack)
+    NavigationIconType.Drawer -> DrawerNavigationIcon(onClick = onOpenDrawer, tint = contentColor)
+    is NavigationIconType.Back -> BackNavigationIcon(onClick = navigationIcon.onBack, tint = contentColor)
     NavigationIconType.None -> { /* No icon */ }
   }
 }
 
 @Composable
-private fun MenuDropdown(menuItems: List<MenuItem>, onOverflowClick: (() -> Unit)? = null) {
+private fun MenuDropdown(menuItems: List<MenuItem>, onOverflowClick: (() -> Unit)? = null, contentColor: Color? = null) {
   // If no items and no override, show nothing
   if (menuItems.isEmpty() && onOverflowClick == null) return
 
@@ -307,7 +341,8 @@ private fun MenuDropdown(menuItems: List<MenuItem>, onOverflowClick: (() -> Unit
     ) {
       Icon(
         imageVector = Icons.Default.MoreVert,
-        contentDescription = stringResource(R.string.menu_overflow_description)
+        contentDescription = stringResource(R.string.menu_overflow_description),
+        tint = contentColor ?: androidx.compose.material3.LocalContentColor.current
       )
     }
 

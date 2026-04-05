@@ -100,6 +100,7 @@ fun DynamicScreenScaffold(
   onOverflowClick: (() -> Unit)? = null,
   fabState: FabState = FabState.Hidden,
   isTransparent: Boolean = false,
+  contentColor: Color? = null,
   content: @Composable (PaddingValues) -> Unit
 ) {
   Scaffold(
@@ -112,6 +113,7 @@ fun DynamicScreenScaffold(
           actionItems = actionItems,
           menuItems = menuItems,
           isTransparent = isTransparent,
+          contentColor = contentColor,
           defaultTitle = defaultTitle,
           onOpenDrawer = onOpenDrawer,
           onOverflowClick = onOverflowClick

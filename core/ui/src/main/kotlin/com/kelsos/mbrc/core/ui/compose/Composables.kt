@@ -83,21 +83,23 @@ fun RemoteTopAppBar(
 }
 
 @Composable
-fun DrawerNavigationIcon(onClick: () -> Unit) {
+fun DrawerNavigationIcon(onClick: () -> Unit, tint: Color? = null) {
   IconButton(onClick = onClick) {
     Icon(
       imageVector = Icons.Default.Menu,
-      contentDescription = stringResource(R.string.drawer_open)
+      contentDescription = stringResource(R.string.drawer_open),
+      tint = tint ?: androidx.compose.material3.LocalContentColor.current
     )
   }
 }
 
 @Composable
-fun BackNavigationIcon(onClick: () -> Unit) {
+fun BackNavigationIcon(onClick: () -> Unit, tint: Color? = null) {
   IconButton(onClick = onClick) {
     Icon(
       imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-      contentDescription = stringResource(R.string.navigate_back)
+      contentDescription = stringResource(R.string.navigate_back),
+      tint = tint ?: androidx.compose.material3.LocalContentColor.current
     )
   }
 }
