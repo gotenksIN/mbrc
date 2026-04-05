@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -481,13 +482,15 @@ private fun rememberAlbumArtState(
 ): AlbumArtState {
   val context = LocalContext.current
 
-  val painter = rememberAsyncImagePainter(
-    model = ImageRequest.Builder(context)
+  val imageRequest = remember(coverUrl) {
+    ImageRequest.Builder(context)
       .data(coverUrl.ifEmpty { null })
       .crossfade(true)
       .allowHardware(false) // Required for Palette color extraction
       .build()
-  )
+  }
+
+  val painter = rememberAsyncImagePainter(model = imageRequest)
 
   // Collect painter state as a snapshot state for proper recomposition
   val painterState by painter.state.collectAsStateWithLifecycle()
@@ -508,7 +511,10 @@ private fun rememberAlbumArtState(
     when (val currentState = painterState) {
       is AsyncImagePainter.State.Success -> {
         val bitmap = currentState.result.image.toBitmap()
-        colors = extractColorsFromBitmap(bitmap, defaultBackground, darkTheme)
+        val extracted = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+          extractColorsFromBitmap(bitmap, defaultBackground, darkTheme)
+        }
+        colors = extracted
       }
 
       else -> {
@@ -1260,6 +1266,11 @@ private fun ProgressSection(
   val totalMs = position.total.toFloat().coerceAtLeast(1f)
   val currentNormalized = if (isStream) 0f else position.current.toFloat() / totalMs
 
+  val animatedSliderPosition by animateFloatAsState(
+    targetValue = if (isUserSeeking || ignoreServerUpdates) sliderPosition else currentNormalized,
+    label = "progress_slider_animation"
+  )
+
   LaunchedEffect(position.current) {
     if (!isUserSeeking && !ignoreServerUpdates && !isStream) {
       sliderPosition = currentNormalized
@@ -1268,7 +1279,7 @@ private fun ProgressSection(
 
   Column(modifier = modifier) {
     ThinSlider(
-      value = if (isUserSeeking || ignoreServerUpdates) sliderPosition else currentNormalized,
+      value = animatedSliderPosition,
       onValueChange = {
         isUserSeeking = true
         sliderPosition = it
