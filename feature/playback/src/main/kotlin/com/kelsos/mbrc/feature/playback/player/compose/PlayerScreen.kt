@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.Lyrics
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lyrics
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -145,6 +146,7 @@ fun PlayerScreen(
 
   var showOutputSelection by remember { mutableStateOf(false) }
   var showLyrics by remember { mutableStateOf(false) }
+  var showTrackDetails by remember { mutableStateOf(false) }
 
   DisposableEffect(Unit) {
     playerScreenVisibilityTracker.isVisible = true
@@ -188,6 +190,13 @@ fun PlayerScreen(
     )
   }
 
+  if (showTrackDetails) {
+    TrackDetailsBottomSheet(
+      trackDetails = trackDetails,
+      onDismiss = { showTrackDetails = false }
+    )
+  }
+
   DynamicScreenScaffold(
     topBarState = topBarState,
     snackbarHostState = snackbarHostState,
@@ -217,6 +226,7 @@ fun PlayerScreen(
       },
       onOutputClick = { showOutputSelection = true },
       onQueueClick = onNavigateToNowPlaying,
+      onTrackDetailsClick = { showTrackDetails = true },
       albumArtState = topBarAlbumArtState,
       contentPadding = paddingValues
     )
@@ -238,6 +248,7 @@ internal fun PlayerScreenContent(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onQueueClick: () -> Unit,
+  onTrackDetailsClick: () -> Unit,
   albumArtState: AlbumArtState,
   contentPadding: PaddingValues = PaddingValues(),
   modifier: Modifier = Modifier
@@ -298,7 +309,8 @@ internal fun PlayerScreenContent(
           onNavigateToArtist = onNavigateToArtist,
           onLyricsClick = onLyricsClick,
           onOutputClick = onOutputClick,
-          onQueueClick = onQueueClick
+          onQueueClick = onQueueClick,
+          onTrackDetailsClick = onTrackDetailsClick
         )
 
         isTablet -> TabletPlayerLayout(
@@ -318,7 +330,8 @@ internal fun PlayerScreenContent(
           onNavigateToArtist = onNavigateToArtist,
           onLyricsClick = onLyricsClick,
           onOutputClick = onOutputClick,
-          onQueueClick = onQueueClick
+          onQueueClick = onQueueClick,
+          onTrackDetailsClick = onTrackDetailsClick
         )
 
         else -> PortraitPlayerLayout(
@@ -338,7 +351,8 @@ internal fun PlayerScreenContent(
           onNavigateToArtist = onNavigateToArtist,
           onLyricsClick = onLyricsClick,
           onOutputClick = onOutputClick,
-          onQueueClick = onQueueClick
+          onQueueClick = onQueueClick,
+          onTrackDetailsClick = onTrackDetailsClick
         )
       }
     }
@@ -694,6 +708,7 @@ private fun PortraitPlayerLayout(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onQueueClick: () -> Unit,
+  onTrackDetailsClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Column(
@@ -771,6 +786,7 @@ private fun PortraitPlayerLayout(
       onLyricsClick = onLyricsClick,
       onOutputClick = onOutputClick,
       onQueueClick = onQueueClick,
+      onTrackDetailsClick = onTrackDetailsClick,
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 24.dp)
@@ -799,6 +815,7 @@ private fun TabletPlayerLayout(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onQueueClick: () -> Unit,
+  onTrackDetailsClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   // For tablets in portrait, use a centered layout with max width constraint
@@ -874,6 +891,7 @@ private fun TabletPlayerLayout(
         onLyricsClick = onLyricsClick,
         onOutputClick = onOutputClick,
         onQueueClick = onQueueClick,
+        onTrackDetailsClick = onTrackDetailsClick,
         modifier = Modifier.fillMaxWidth()
       )
     }
@@ -899,6 +917,7 @@ private fun LandscapePlayerLayout(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onQueueClick: () -> Unit,
+  onTrackDetailsClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Row(
@@ -1079,6 +1098,7 @@ private fun PlayerBottomBar(
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
   onQueueClick: () -> Unit,
+  onTrackDetailsClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val uiColors = LocalPlayerUiColors.current
@@ -1112,6 +1132,15 @@ private fun PlayerBottomBar(
       Icon(
         imageVector = Icons.AutoMirrored.Filled.QueueMusic,
         contentDescription = stringResource(R.string.nav_queue),
+        tint = uiColors.primaryForeground,
+        modifier = Modifier.size(24.dp)
+      )
+    }
+
+    IconButton(onClick = onTrackDetailsClick) {
+      Icon(
+        imageVector = Icons.Outlined.Info,
+        contentDescription = stringResource(R.string.track_details_title),
         tint = uiColors.primaryForeground,
         modifier = Modifier.size(24.dp)
       )
