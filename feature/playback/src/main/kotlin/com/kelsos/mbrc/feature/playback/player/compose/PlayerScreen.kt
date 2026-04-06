@@ -147,6 +147,7 @@ fun PlayerScreen(
   var showOutputSelection by remember { mutableStateOf(false) }
   var showLyrics by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
+  var showQueueBottomSheet by remember { mutableStateOf(false) }
 
   DisposableEffect(Unit) {
     playerScreenVisibilityTracker.isVisible = true
@@ -197,6 +198,14 @@ fun PlayerScreen(
     )
   }
 
+  if (showQueueBottomSheet) {
+    com.kelsos.mbrc.feature.playback.nowplaying.compose.QueueBottomSheet(
+      onDismiss = { showQueueBottomSheet = false },
+      onGoToAlbum = onNavigateToAlbum,
+      onGoToArtist = onNavigateToArtist
+    )
+  }
+
   DynamicScreenScaffold(
     topBarState = topBarState,
     snackbarHostState = snackbarHostState,
@@ -225,7 +234,7 @@ fun PlayerScreen(
         }
       },
       onOutputClick = { showOutputSelection = true },
-      onQueueClick = onNavigateToNowPlaying,
+      onQueueClick = { showQueueBottomSheet = true },
       onTrackDetailsClick = { showTrackDetails = true },
       albumArtState = topBarAlbumArtState,
       contentPadding = paddingValues

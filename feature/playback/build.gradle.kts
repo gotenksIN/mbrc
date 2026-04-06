@@ -40,6 +40,7 @@ dependencies {
   implementation(project(":feature:minicontrol"))
   implementation(project(":feature:misc"))
   implementation(project(":feature:settings"))
+  implementation(project(":feature:library"))
 
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.bundles.androidx.compose)

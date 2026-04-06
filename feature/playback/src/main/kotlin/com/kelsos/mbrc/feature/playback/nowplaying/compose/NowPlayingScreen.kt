@@ -406,7 +406,7 @@ private fun NowPlayingTrackList(
           isPlaying = isPlaying,
           isDragging = isDragging,
           dragDropState = dragDropState,
-          onClick = remember(index) { { onTrackClick(index + 1) } },
+          onClick = remember(track.position) { { onTrackClick(track.position) } },
           onRemove = remember(index) { { onTrackRemove(index) } },
           onGoToAlbum = onGoToAlbum?.let { callback -> remember(track) { { callback(track.path) } } },
           onGoToArtist = remember(track) { { onGoToArtist(track.artist) } }
@@ -416,7 +416,7 @@ private fun NowPlayingTrackList(
           track = track,
           isPlaying = isPlaying,
           isDragging = false,
-          onClick = remember(index) { { onTrackClick(index + 1) } },
+          onClick = remember(track.position) { { onTrackClick(track.position) } },
           onGoToAlbum = onGoToAlbum?.let { callback -> remember(track) { { callback(track.path) } } },
           onGoToArtist = remember(track) { { onGoToArtist(track.artist) } },
           modifier = Modifier.animateItem()
