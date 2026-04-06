@@ -310,50 +310,6 @@ class SettingsScreenTest : KoinTest {
     }
   }
 
-  @Test
-  fun `half star rating toggle triggers action`() {
-    setupKoin()
-    try {
-      var halfStarValue: Boolean? = null
-      val actions = TestSettingsActions(onHalfStarRatingChanged = { halfStarValue = it })
-
-      composeTestRule.setContent {
-        SettingsScreenContent(
-          state = SettingsContentState(halfStarRatingEnabled = true),
-          actions = actions,
-          appInfo = testAppInfo
-        )
-      }
-
-      composeTestRule.onNodeWithText("Half-star ratings").performClick()
-      assertThat(halfStarValue).isFalse()
-    } finally {
-      teardownKoin()
-    }
-  }
-
-  @Test
-  fun `show rating on player toggle triggers action`() {
-    setupKoin()
-    try {
-      var showRatingValue: Boolean? = null
-      val actions = TestSettingsActions(onShowRatingOnPlayerChanged = { showRatingValue = it })
-
-      composeTestRule.setContent {
-        SettingsScreenContent(
-          state = SettingsContentState(showRatingOnPlayerEnabled = false),
-          actions = actions,
-          appInfo = testAppInfo
-        )
-      }
-
-      composeTestRule.onNodeWithText("Show rating on player").performClick()
-      assertThat(showRatingValue).isTrue()
-    } finally {
-      teardownKoin()
-    }
-  }
-
   // endregion
 
   // region Navigation Tests
@@ -819,8 +775,6 @@ class TestSettingsActions(
   override val onIncomingCallActionSelected: (CallAction) -> Unit = {},
   override val onPluginUpdatesChanged: (Boolean) -> Unit = {},
   override val onDebugLoggingChanged: (Boolean) -> Unit = {},
-  override val onHalfStarRatingChanged: (Boolean) -> Unit = {},
-  override val onShowRatingOnPlayerChanged: (Boolean) -> Unit = {},
   override val onTrackDefaultActionClick: () -> Unit = {},
   override val onTrackDefaultActionSelected: (TrackAction) -> Unit = {},
   override val onNavigateToLicenses: () -> Unit = {},
