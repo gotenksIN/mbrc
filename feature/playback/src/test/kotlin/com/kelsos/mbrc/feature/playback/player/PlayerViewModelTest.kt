@@ -46,7 +46,6 @@ class PlayerViewModelTest : KoinTest {
   private val trackRatingFlow = MutableStateFlow(TrackRating())
   private val playerStatusFlow = MutableStateFlow(PlayerStatusModel())
   private val trackDetailsFlow = MutableStateFlow(TrackDetails.EMPTY)
-  private val showRatingOnPlayerFlow = MutableStateFlow(false)
 
   private val testModule = module {
     single<AppStateFlow> {
@@ -60,11 +59,7 @@ class PlayerViewModelTest : KoinTest {
     }
     single<UserActionUseCase> { mockk(relaxed = true) }
     single<ChangeLogChecker> { mockk(relaxed = true) }
-    single<SettingsManager> {
-      mockk(relaxed = true) {
-        every { showRatingOnPlayerFlow } returns this@PlayerViewModelTest.showRatingOnPlayerFlow
-      }
-    }
+    single<SettingsManager> { mockk(relaxed = true) }
     singleOf(::PlayerViewModel)
   }
 
@@ -135,13 +130,6 @@ class PlayerViewModelTest : KoinTest {
   @Test
   fun `isScrobbling initial state should be false`() = runTest(testDispatcher) {
     viewModel.isScrobbling.test {
-      assertThat(awaitItem()).isFalse()
-    }
-  }
-
-  @Test
-  fun `showRatingOnPlayer initial state should be false`() = runTest(testDispatcher) {
-    viewModel.showRatingOnPlayer.test {
       assertThat(awaitItem()).isFalse()
     }
   }
@@ -229,17 +217,6 @@ class PlayerViewModelTest : KoinTest {
         assertThat(awaitItem()).isTrue()
       }
     }
-
-  @Test
-  fun `showRatingOnPlayer should update when settings change`() = runTest(testDispatcher) {
-    viewModel.showRatingOnPlayer.test {
-      awaitItem() // initial false
-
-      showRatingOnPlayerFlow.emit(true)
-
-      assertThat(awaitItem()).isTrue()
-    }
-  }
 
   @Test
   fun `volumeState should emit distinctUntilChanged`() = runTest(testDispatcher) {
