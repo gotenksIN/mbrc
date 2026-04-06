@@ -991,6 +991,18 @@ private fun LandscapePlayerLayout(
         actions = actions,
         modifier = Modifier.fillMaxWidth()
       )
+
+      Spacer(modifier = Modifier.height(24.dp))
+
+      PlayerBottomBar(
+        hasLyrics = hasLyrics,
+        showLyrics = showLyrics,
+        onLyricsClick = onLyricsClick,
+        onOutputClick = onOutputClick,
+        onQueueClick = onQueueClick,
+        onTrackDetailsClick = onTrackDetailsClick,
+        modifier = Modifier.fillMaxWidth()
+      )
     }
   }
 }
