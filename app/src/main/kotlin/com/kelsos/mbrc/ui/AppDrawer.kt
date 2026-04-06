@@ -175,20 +175,22 @@ private fun DrawerHeader(
 ) {
   val isDarkTheme = isSystemInDarkTheme()
 
-  val primaryContainer = MaterialTheme.colorScheme.primaryContainer
-  val gradientColors = remember(isDarkTheme, primaryContainer) {
+  val primary = MaterialTheme.colorScheme.primary
+  val gradientColors = remember(isDarkTheme, primary) {
     if (isDarkTheme) {
       listOf(
-        primaryContainer.copy(alpha = 0.9f),
-        primaryContainer.copy(alpha = 0.7f)
+        primary.copy(alpha = 0.3f),
+        primary.copy(alpha = 0.1f)
       )
     } else {
       listOf(
-        primaryContainer,
-        primaryContainer.copy(alpha = 0.85f)
+        primary,
+        primary.copy(alpha = 0.85f)
       )
     }
   }
+
+  val onPrimary = if (isDarkTheme) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
 
   Box(
     modifier = Modifier
@@ -216,7 +218,7 @@ private fun DrawerHeader(
           Surface(
             modifier = Modifier.size(48.dp),
             shape = RoundedCornerShape(12.dp),
-            color = Color.White.copy(alpha = 0.2f)
+            color = onPrimary.copy(alpha = 0.2f)
           ) {
             Box(
               modifier = Modifier.fillMaxSize(),
@@ -235,7 +237,7 @@ private fun DrawerHeader(
             Text(
               text = stringResource(R.string.application_name),
               style = MaterialTheme.typography.titleMedium,
-              color = Color.White,
+              color = onPrimary,
               fontWeight = FontWeight.SemiBold
             )
             // Show connection status or name
@@ -265,7 +267,7 @@ private fun DrawerHeader(
               Text(
                 text = statusText,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.7f)
+                color = onPrimary.copy(alpha = 0.7f)
               )
             }
           }
@@ -274,6 +276,7 @@ private fun DrawerHeader(
         // Connection status icon button
         ConnectionStatusIconButton(
           connectionState = connectionStatus,
+          onPrimary = onPrimary,
           onConnectionClick = onConnectionToggle
         )
       }
@@ -288,6 +291,7 @@ private fun DrawerHeader(
 @Composable
 private fun ConnectionStatusIconButton(
   connectionState: ConnectionStatus,
+  onPrimary: Color,
   onConnectionClick: () -> Unit
 ) {
   val (statusColor, statusIcon) = when (connectionState) {
@@ -311,7 +315,7 @@ private fun ConnectionStatusIconButton(
     Surface(
       modifier = Modifier.fillMaxSize(),
       shape = CircleShape,
-      color = Color.White.copy(alpha = 0.2f)
+      color = onPrimary.copy(alpha = 0.2f)
     ) {}
 
     // Indeterminate spinner when connecting (outer ring)
