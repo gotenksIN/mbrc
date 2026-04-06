@@ -53,6 +53,7 @@ class NowPlayingRepositoryImpl(
         withContext(dispatchers.database) {
           dao.cached().associateBy { it.key }
         }
+      var currentOffset = 0
       playbackApi
         .getNowPlayingList(progress)
         .onCompletion {
@@ -60,7 +61,10 @@ class NowPlayingRepositoryImpl(
             dao.removePreviousEntries(added)
           }
         }.collect { item ->
-          val list = item.map { it.toEntity().copy(dateAdded = added) }
+          val list = item.mapIndexed { index, dto ->
+            dto.toEntity().copy(dateAdded = added, sortIndex = currentOffset + index)
+          }
+          currentOffset += item.size
 
           val existing = list.filter { cached.containsKey(it.key) }
           val new = list.minus(existing.toSet())

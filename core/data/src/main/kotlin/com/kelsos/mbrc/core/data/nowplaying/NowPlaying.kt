@@ -19,7 +19,8 @@ data class NowPlaying(
   tableName = "now_playing",
   indices = [
     Index(value = ["position"], name = "now_playing_position_idx"),
-    Index(value = ["date_added"], name = "now_playing_date_added_idx")
+    Index(value = ["date_added"], name = "now_playing_date_added_idx"),
+    Index(value = ["sort_index"], name = "now_playing_sort_index_idx")
   ]
 )
 data class NowPlayingEntity(
@@ -33,6 +34,8 @@ data class NowPlayingEntity(
   val position: Int = 0,
   @ColumnInfo(name = "date_added")
   val dateAdded: Long = 0,
+  @ColumnInfo(name = "sort_index")
+  val sortIndex: Int = 0,
   @PrimaryKey(autoGenerate = true)
   val id: Long = 0
 )

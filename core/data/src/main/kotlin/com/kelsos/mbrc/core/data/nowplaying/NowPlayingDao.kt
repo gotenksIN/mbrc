@@ -18,10 +18,10 @@ interface NowPlayingDao {
   @Query("delete from now_playing")
   fun deleteAll()
 
-  @Query("select * from now_playing order by position")
+  @Query("select * from now_playing order by sort_index")
   fun getAll(): PagingSource<Int, NowPlayingEntity>
 
-  @Query("select * from now_playing order by position")
+  @Query("select * from now_playing order by sort_index")
   fun all(): List<NowPlayingEntity>
 
   @Query("select id, position, path from now_playing")
