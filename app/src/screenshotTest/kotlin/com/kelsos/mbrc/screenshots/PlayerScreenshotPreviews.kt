@@ -15,7 +15,7 @@ import com.kelsos.mbrc.core.ui.theme.RemoteTheme
 import com.kelsos.mbrc.feature.playback.player.IPlayerActions
 import com.kelsos.mbrc.feature.playback.player.PlaybackState
 import com.kelsos.mbrc.feature.playback.player.VolumeState
-import com.kelsos.mbrc.feature.playback.player.compose.PlayerScreenContent
+import com.kelsos.mbrc.feature.playback.player.compose.PlayerScreenPreviewContent as PlayerScreenContent
 
 /**
  * No-op implementation of IPlayerActions for preview purposes.

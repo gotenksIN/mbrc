@@ -233,6 +233,55 @@ fun PlayerScreen(
   }
 }
 
+@Suppress("UNUSED_PARAMETER")
+@Composable
+fun PlayerScreenPreviewContent(
+  playingTrack: TrackInfo,
+  playingPosition: PlayingPosition,
+  trackRating: TrackRating,
+  volumeState: VolumeState,
+  playbackState: PlaybackState,
+  actions: IPlayerActions,
+  lyrics: List<String> = emptyList(),
+  showLyrics: Boolean = false,
+  hasLyrics: Boolean,
+  showRatingOnPlayer: Boolean = false,
+  onTrackInfoClick: () -> Unit,
+  onLyricsClick: () -> Unit,
+  onOutputClick: () -> Unit,
+  onRatingClick: () -> Unit,
+  contentPadding: PaddingValues = PaddingValues(),
+  modifier: Modifier = Modifier
+) {
+  val darkTheme = isSystemInDarkTheme()
+  val defaultBackground = MaterialTheme.colorScheme.background
+  val albumArtState = rememberAlbumArtState(
+    coverUrl = playingTrack.coverUrl,
+    defaultBackground = defaultBackground,
+    darkTheme = darkTheme
+  )
+
+  PlayerScreenContent(
+    playingTrack = playingTrack,
+    playingPosition = playingPosition,
+    volumeState = volumeState,
+    playbackState = playbackState,
+    actions = actions,
+    lyrics = lyrics,
+    showLyrics = showLyrics,
+    hasLyrics = hasLyrics,
+    onNavigateToAlbum = { _, _ -> },
+    onNavigateToArtist = {},
+    onLyricsClick = onLyricsClick,
+    onOutputClick = onOutputClick,
+    onQueueClick = onTrackInfoClick,
+    onTrackDetailsClick = onRatingClick,
+    albumArtState = albumArtState,
+    contentPadding = contentPadding,
+    modifier = modifier
+  )
+}
+
 @Composable
 internal fun PlayerScreenContent(
   playingTrack: TrackInfo,
