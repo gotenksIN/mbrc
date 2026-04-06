@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.outlined.Lyrics
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -749,7 +750,7 @@ private fun PortraitPlayerLayout(
   ) {
     Box(
       modifier = Modifier
-        .padding(horizontal = 18.dp)
+        .padding(horizontal = 24.dp)
         .fillMaxWidth()
         .aspectRatio(1f)
     ) {
@@ -763,7 +764,22 @@ private fun PortraitPlayerLayout(
       )
     }
 
-    Spacer(modifier = Modifier.height(22.dp))
+    Spacer(modifier = Modifier.height(32.dp))
+
+    TrackInfoWithFavourite(
+      track = playingTrack,
+      isFavourite = isFavorite,
+      isBanned = isBanned,
+      isStream = playingPosition.isStream,
+      onTrackClick = onTrackInfoClick,
+      onFavouriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+      onBanClick = { actions.toggleBan(isBanned, isFavorite) },
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 24.dp)
+    )
+
+    Spacer(modifier = Modifier.height(24.dp))
 
     ProgressSection(
       position = playingPosition,
@@ -773,21 +789,14 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
-
-    BlurTrackInfo(
-      track = playingTrack,
-      onTrackClick = onTrackInfoClick,
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 28.dp)
-    )
-
-    Spacer(modifier = Modifier.height(28.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
     PlaybackControls(
       playbackState = playbackState,
-      actions = actions
+      actions = actions,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 24.dp)
     )
 
     Spacer(modifier = Modifier.height(24.dp))
@@ -795,25 +804,25 @@ private fun PortraitPlayerLayout(
     VolumeSection(
       volumeState = volumeState,
       actions = actions,
-      onOutputClick = onOutputClick,
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(18.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
-    BlurPlayerActionDock(
+    PlayerBottomBar(
+      hasLyrics = hasLyrics,
+      showLyrics = showLyrics,
+      onLyricsClick = onLyricsClick,
       onOutputClick = onOutputClick,
       onQueueClick = onTrackInfoClick,
-      hasLyrics = hasLyrics,
-      onLyricsClick = onLyricsClick,
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(32.dp))
   }
 }
 
@@ -871,17 +880,15 @@ private fun TabletPlayerLayout(
 
       Spacer(modifier = Modifier.height(40.dp))
 
-      // Track info with favorite/ban
-      TrackInfoWithFavorite(
+      // Track info
+      TrackInfoWithFavourite(
         track = playingTrack,
-        isFavorite = isFavorite,
+        isFavourite = isFavorite,
         isBanned = isBanned,
         isStream = playingPosition.isStream,
-        hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
-        onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+        onFavouriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
         onBanClick = { actions.toggleBan(isBanned, isFavorite) },
-        onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
 
@@ -899,7 +906,8 @@ private fun TabletPlayerLayout(
       // Playback controls
       PlaybackControls(
         playbackState = playbackState,
-        actions = actions
+        actions = actions,
+        modifier = Modifier.fillMaxWidth()
       )
 
       Spacer(modifier = Modifier.height(32.dp))
@@ -908,7 +916,17 @@ private fun TabletPlayerLayout(
       VolumeSection(
         volumeState = volumeState,
         actions = actions,
+        modifier = Modifier.fillMaxWidth()
+      )
+
+      Spacer(modifier = Modifier.height(32.dp))
+
+      PlayerBottomBar(
+        hasLyrics = hasLyrics,
+        showLyrics = showLyrics,
+        onLyricsClick = onLyricsClick,
         onOutputClick = onOutputClick,
+        onQueueClick = onTrackInfoClick,
         modifier = Modifier.fillMaxWidth()
       )
     }
@@ -977,16 +995,14 @@ private fun LandscapePlayerLayout(
       verticalArrangement = Arrangement.Center
     ) {
       // Track info with favorite/ban
-      TrackInfoWithFavorite(
+      TrackInfoWithFavourite(
         track = playingTrack,
-        isFavorite = isFavorite,
+        isFavourite = isFavorite,
         isBanned = isBanned,
         isStream = playingPosition.isStream,
-        hasLyrics = hasLyrics,
         onTrackClick = onTrackInfoClick,
-        onFavoriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
+        onFavouriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
         onBanClick = { actions.toggleBan(isBanned, isFavorite) },
-        onLyricsClick = onLyricsClick,
         modifier = Modifier.fillMaxWidth()
       )
 
@@ -1004,7 +1020,8 @@ private fun LandscapePlayerLayout(
       // Playback controls
       PlaybackControls(
         playbackState = playbackState,
-        actions = actions
+        actions = actions,
+        modifier = Modifier.fillMaxWidth()
       )
 
       Spacer(modifier = Modifier.height(24.dp))
@@ -1013,7 +1030,6 @@ private fun LandscapePlayerLayout(
       VolumeSection(
         volumeState = volumeState,
         actions = actions,
-        onOutputClick = onOutputClick,
         modifier = Modifier.fillMaxWidth()
       )
     }
@@ -1052,16 +1068,14 @@ private fun AlbumCover(painter: AsyncImagePainter, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun TrackInfoWithFavorite(
+private fun TrackInfoWithFavourite(
   track: TrackInfo,
-  isFavorite: Boolean,
+  isFavourite: Boolean,
   isBanned: Boolean,
   isStream: Boolean,
-  hasLyrics: Boolean,
   onTrackClick: () -> Unit,
-  onFavoriteClick: () -> Unit,
+  onFavouriteClick: () -> Unit,
   onBanClick: () -> Unit,
-  onLyricsClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val uiColors = LocalPlayerUiColors.current
@@ -1069,7 +1083,20 @@ private fun TrackInfoWithFavorite(
     modifier = modifier,
     verticalAlignment = Alignment.CenterVertically
   ) {
-    // Track info - left aligned with fixed heights to prevent UI jumping
+    // Ban button
+    IconButton(
+      onClick = onBanClick,
+      enabled = !isStream
+    ) {
+      Icon(
+        imageVector = Icons.Default.ThumbDown,
+        contentDescription = "Ban",
+        tint = if (isBanned) uiColors.primaryForeground else uiColors.disabledForeground,
+        modifier = Modifier.size(24.dp)
+      )
+    }
+
+    // Track info - centered
     Column(
       modifier = Modifier
         .weight(1f)
@@ -1089,8 +1116,15 @@ private fun TrackInfoWithFavorite(
 
       Spacer(modifier = Modifier.height(4.dp))
 
+      val artistText = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
+      val subtitleText = if (track.album.isNotEmpty()) {
+        "${track.album} - $artistText"
+      } else {
+        artistText
+      }
+
       Text(
-        text = track.artist.ifEmpty { stringResource(R.string.unknown_artist) },
+        text = subtitleText,
         style = MaterialTheme.typography.bodyLarge,
         color = uiColors.secondaryForeground,
         maxLines = 1,
@@ -1098,148 +1132,67 @@ private fun TrackInfoWithFavorite(
         textAlign = TextAlign.Center,
         modifier = Modifier.height(22.dp)
       )
-
-      Spacer(modifier = Modifier.height(2.dp))
-
-      // Album - always shown with fixed height
-      val albumText = if (track.album.isNotEmpty()) {
-        track.album
-      } else {
-        " " // Space to maintain height
-      }
-      Text(
-        text = albumText,
-        style = MaterialTheme.typography.bodyMedium,
-        color = uiColors.mutedForeground,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.height(20.dp)
-      )
     }
 
-    // Lyrics button - primary color when lyrics available
-    if (hasLyrics) {
-      IconButton(onClick = onLyricsClick) {
-        Icon(
-          imageVector = Icons.Outlined.Lyrics,
-          contentDescription = stringResource(R.string.nav_lyrics),
-          tint = uiColors.primaryForeground,
-          modifier = Modifier.size(24.dp)
-        )
-      }
-    } else {
-      Spacer(modifier = Modifier.size(48.dp)) // IconButton default size to keep centering
+    // Favourite button
+    IconButton(
+      onClick = onFavouriteClick,
+      enabled = !isStream
+    ) {
+      Icon(
+        imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+        contentDescription = "Favourite",
+        tint = if (isFavourite) uiColors.primaryForeground else uiColors.disabledForeground,
+        modifier = Modifier.size(24.dp)
+      )
     }
   }
 }
 
 @Composable
-private fun BlurTrackInfo(
-  track: TrackInfo,
-  onTrackClick: () -> Unit,
+private fun PlayerBottomBar(
+  hasLyrics: Boolean,
+  showLyrics: Boolean,
+  onLyricsClick: () -> Unit,
+  onOutputClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val uiColors = LocalPlayerUiColors.current
-  Column(
-    modifier = modifier.clickable(onClick = onTrackClick),
-    horizontalAlignment = Alignment.CenterHorizontally
-  ) {
-    Text(
-      text = track.title.ifEmpty { stringResource(R.string.unknown_title) },
-      style = MaterialTheme.typography.headlineSmall,
-      fontWeight = FontWeight.Bold,
-      color = uiColors.primaryForeground,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-      textAlign = TextAlign.Center
-    )
-
-    Spacer(modifier = Modifier.height(10.dp))
-
-    val subtitle = buildString {
-      val artist = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
-      append(artist)
-
-      if (track.album.isNotEmpty()) {
-        append(" • ")
-        append(track.album)
-      }
-    }
-
-    Text(
-      text = subtitle,
-      style = MaterialTheme.typography.bodyLarge,
-      color = uiColors.secondaryForeground,
-      maxLines = 2,
-      overflow = TextOverflow.Ellipsis,
-      textAlign = TextAlign.Center
-    )
-  }
-}
-
-@Composable
-private fun BlurPlayerActionDock(
-  onOutputClick: () -> Unit,
-  onQueueClick: () -> Unit,
-  hasLyrics: Boolean = false,
-  onLyricsClick: () -> Unit = {},
-  modifier: Modifier = Modifier
-) {
   Row(
     modifier = modifier,
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically
   ) {
-    if (hasLyrics) {
-      BlurDockItem(
-        icon = Icons.Outlined.Lyrics,
-        label = "Lyrics",
-        contentDescription = stringResource(R.string.nav_lyrics),
-        onClick = onLyricsClick,
-        isActive = true
+    IconButton(onClick = onOutputClick) {
+      Icon(
+        imageVector = Icons.Default.SpeakerGroup,
+        contentDescription = stringResource(R.string.output_selection_title),
+        tint = uiColors.primaryForeground,
+        modifier = Modifier.size(24.dp)
       )
     }
-    BlurDockItem(
-      icon = Icons.Default.SpeakerGroup,
-      label = "Output",
-      contentDescription = stringResource(R.string.output_selection_title),
-      onClick = onOutputClick
-    )
-    BlurDockItem(
-      icon = Icons.AutoMirrored.Filled.QueueMusic,
-      label = "Queue",
-      contentDescription = stringResource(R.string.nav_queue),
-      onClick = onQueueClick
-    )
-  }
-}
 
-@Composable
-private fun BlurDockItem(
-  icon: androidx.compose.ui.graphics.vector.ImageVector,
-  label: String,
-  contentDescription: String,
-  onClick: () -> Unit,
-  isActive: Boolean = false
-) {
-  val uiColors = LocalPlayerUiColors.current
-  Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    modifier = Modifier.clickable(onClick = onClick)
-  ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = contentDescription,
-      tint = if (isActive) uiColors.primaryForeground else uiColors.secondaryForeground,
-      modifier = Modifier.size(22.dp)
-    )
-    Spacer(modifier = Modifier.height(6.dp))
-    Text(
-      text = label,
-      style = MaterialTheme.typography.labelMedium,
-      color = if (isActive) uiColors.primaryForeground else uiColors.secondaryForeground
-    )
+    IconButton(
+      onClick = onLyricsClick,
+      enabled = hasLyrics
+    ) {
+      Icon(
+        imageVector = if (showLyrics) Icons.Filled.Lyrics else Icons.Outlined.Lyrics,
+        contentDescription = stringResource(R.string.nav_lyrics),
+        tint = if (hasLyrics) uiColors.primaryForeground else uiColors.disabledForeground,
+        modifier = Modifier.size(24.dp)
+      )
+    }
+
+    IconButton(onClick = onQueueClick) {
+      Icon(
+        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+        contentDescription = stringResource(R.string.nav_queue),
+        tint = uiColors.primaryForeground,
+        modifier = Modifier.size(24.dp)
+      )
+    }
   }
 }
 
@@ -1318,7 +1271,6 @@ private fun ProgressSection(
 private fun VolumeSection(
   volumeState: VolumeState,
   actions: IPlayerActions,
-  onOutputClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val uiColors = LocalPlayerUiColors.current
@@ -1381,27 +1333,14 @@ private fun VolumeSection(
       thumbColor = uiColors.primaryForeground,
       modifier = Modifier.weight(1f)
     )
-
-    // Output selection button
-    IconButton(
-      onClick = onOutputClick,
-      modifier = Modifier.size(32.dp)
-    ) {
-      Icon(
-        imageVector = Icons.Default.SpeakerGroup,
-        contentDescription = stringResource(R.string.output_selection_title),
-        tint = uiColors.secondaryForeground,
-        modifier = Modifier.size(20.dp)
-      )
-    }
   }
 }
 
 @Composable
-private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActions) {
+private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActions, modifier: Modifier = Modifier) {
   val uiColors = LocalPlayerUiColors.current
   Row(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier,
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically
   ) {
