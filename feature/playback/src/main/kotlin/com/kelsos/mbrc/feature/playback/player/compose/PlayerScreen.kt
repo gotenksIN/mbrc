@@ -145,7 +145,6 @@ fun PlayerScreen(
 
   var showOutputSelection by remember { mutableStateOf(false) }
   var showLyrics by remember { mutableStateOf(false) }
-  var showTrackDetails by remember { mutableStateOf(false) }
 
   DisposableEffect(Unit) {
     playerScreenVisibilityTracker.isVisible = true
@@ -189,13 +188,6 @@ fun PlayerScreen(
     )
   }
 
-  if (showTrackDetails) {
-    TrackDetailsBottomSheet(
-      trackDetails = trackDetails,
-      onDismiss = { showTrackDetails = false }
-    )
-  }
-
   DynamicScreenScaffold(
     topBarState = topBarState,
     snackbarHostState = snackbarHostState,
@@ -216,13 +208,15 @@ fun PlayerScreen(
       lyrics = lyrics,
       showLyrics = showLyrics,
       hasLyrics = lyrics.isNotEmpty(),
-      onTrackInfoClick = onNavigateToNowPlaying,
+      onNavigateToAlbum = onNavigateToAlbum,
+      onNavigateToArtist = onNavigateToArtist,
       onLyricsClick = {
         if (lyrics.isNotEmpty()) {
           showLyrics = !showLyrics
         }
       },
       onOutputClick = { showOutputSelection = true },
+      onQueueClick = onNavigateToNowPlaying,
       albumArtState = topBarAlbumArtState,
       contentPadding = paddingValues
     )
@@ -239,9 +233,11 @@ internal fun PlayerScreenContent(
   lyrics: List<String>,
   showLyrics: Boolean,
   hasLyrics: Boolean,
-  onTrackInfoClick: () -> Unit,
+  onNavigateToAlbum: (album: String, artist: String) -> Unit,
+  onNavigateToArtist: (artist: String) -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
+  onQueueClick: () -> Unit,
   albumArtState: AlbumArtState,
   contentPadding: PaddingValues = PaddingValues(),
   modifier: Modifier = Modifier
@@ -298,9 +294,11 @@ internal fun PlayerScreenContent(
           topInset = topInset,
           bottomInset = bottomInset,
           actions = actions,
-          onTrackInfoClick = onTrackInfoClick,
+          onNavigateToAlbum = onNavigateToAlbum,
+          onNavigateToArtist = onNavigateToArtist,
           onLyricsClick = onLyricsClick,
-          onOutputClick = onOutputClick
+          onOutputClick = onOutputClick,
+          onQueueClick = onQueueClick
         )
 
         isTablet -> TabletPlayerLayout(
@@ -316,9 +314,11 @@ internal fun PlayerScreenContent(
           topInset = topInset,
           bottomInset = bottomInset,
           actions = actions,
-          onTrackInfoClick = onTrackInfoClick,
+          onNavigateToAlbum = onNavigateToAlbum,
+          onNavigateToArtist = onNavigateToArtist,
           onLyricsClick = onLyricsClick,
-          onOutputClick = onOutputClick
+          onOutputClick = onOutputClick,
+          onQueueClick = onQueueClick
         )
 
         else -> PortraitPlayerLayout(
@@ -334,9 +334,11 @@ internal fun PlayerScreenContent(
           topInset = topInset,
           bottomInset = bottomInset,
           actions = actions,
-          onTrackInfoClick = onTrackInfoClick,
+          onNavigateToAlbum = onNavigateToAlbum,
+          onNavigateToArtist = onNavigateToArtist,
           onLyricsClick = onLyricsClick,
-          onOutputClick = onOutputClick
+          onOutputClick = onOutputClick,
+          onQueueClick = onQueueClick
         )
       }
     }
@@ -687,9 +689,11 @@ private fun PortraitPlayerLayout(
   topInset: androidx.compose.ui.unit.Dp,
   bottomInset: androidx.compose.ui.unit.Dp,
   actions: IPlayerActions,
-  onTrackInfoClick: () -> Unit,
+  onNavigateToAlbum: (album: String, artist: String) -> Unit,
+  onNavigateToArtist: (artist: String) -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Column(
@@ -722,7 +726,8 @@ private fun PortraitPlayerLayout(
 
     TrackInfoPanel(
       track = playingTrack,
-      onTrackClick = onTrackInfoClick,
+      onNavigateToAlbum = onNavigateToAlbum,
+      onNavigateToArtist = onNavigateToArtist,
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 24.dp)
@@ -765,7 +770,7 @@ private fun PortraitPlayerLayout(
       showLyrics = showLyrics,
       onLyricsClick = onLyricsClick,
       onOutputClick = onOutputClick,
-      onQueueClick = onTrackInfoClick,
+      onQueueClick = onQueueClick,
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 24.dp)
@@ -789,9 +794,11 @@ private fun TabletPlayerLayout(
   topInset: androidx.compose.ui.unit.Dp,
   bottomInset: androidx.compose.ui.unit.Dp,
   actions: IPlayerActions,
-  onTrackInfoClick: () -> Unit,
+  onNavigateToAlbum: (album: String, artist: String) -> Unit,
+  onNavigateToArtist: (artist: String) -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   // For tablets in portrait, use a centered layout with max width constraint
@@ -827,7 +834,8 @@ private fun TabletPlayerLayout(
       // Track info
       TrackInfoPanel(
         track = playingTrack,
-        onTrackClick = onTrackInfoClick,
+        onNavigateToAlbum = onNavigateToAlbum,
+        onNavigateToArtist = onNavigateToArtist,
         modifier = Modifier.fillMaxWidth()
       )
 
@@ -865,7 +873,7 @@ private fun TabletPlayerLayout(
         showLyrics = showLyrics,
         onLyricsClick = onLyricsClick,
         onOutputClick = onOutputClick,
-        onQueueClick = onTrackInfoClick,
+        onQueueClick = onQueueClick,
         modifier = Modifier.fillMaxWidth()
       )
     }
@@ -886,9 +894,11 @@ private fun LandscapePlayerLayout(
   topInset: androidx.compose.ui.unit.Dp,
   bottomInset: androidx.compose.ui.unit.Dp,
   actions: IPlayerActions,
-  onTrackInfoClick: () -> Unit,
+  onNavigateToAlbum: (album: String, artist: String) -> Unit,
+  onNavigateToArtist: (artist: String) -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
+  onQueueClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Row(
@@ -931,7 +941,8 @@ private fun LandscapePlayerLayout(
       // Track info with favorite/ban
       TrackInfoPanel(
         track = playingTrack,
-        onTrackClick = onTrackInfoClick,
+        onNavigateToAlbum = onNavigateToAlbum,
+        onNavigateToArtist = onNavigateToArtist,
         modifier = Modifier.fillMaxWidth()
       )
 
@@ -999,12 +1010,13 @@ private fun AlbumCover(painter: AsyncImagePainter, modifier: Modifier = Modifier
 @Composable
 private fun TrackInfoPanel(
   track: TrackInfo,
-  onTrackClick: () -> Unit,
+  onNavigateToAlbum: (album: String, artist: String) -> Unit,
+  onNavigateToArtist: (artist: String) -> Unit,
   modifier: Modifier = Modifier
 ) {
   val uiColors = LocalPlayerUiColors.current
   Column(
-    modifier = modifier.clickable(onClick = onTrackClick),
+    modifier = modifier,
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     Text(
@@ -1021,21 +1033,42 @@ private fun TrackInfoPanel(
     Spacer(modifier = Modifier.height(4.dp))
 
     val artistText = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
-    val subtitleText = if (track.album.isNotEmpty()) {
-      "${track.album} - $artistText"
-    } else {
-      artistText
+    
+    Row(
+      horizontalArrangement = Arrangement.Center,
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      if (track.album.isNotEmpty()) {
+        Text(
+          text = track.album,
+          style = MaterialTheme.typography.bodyLarge,
+          color = uiColors.secondaryForeground,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          textAlign = TextAlign.Center,
+          modifier = Modifier
+            .weight(1f, fill = false)
+            .clickable { onNavigateToAlbum(track.album, track.artist) }
+        )
+        Text(
+          text = " - ",
+          style = MaterialTheme.typography.bodyLarge,
+          color = uiColors.secondaryForeground
+        )
+      }
+      Text(
+        text = artistText,
+        style = MaterialTheme.typography.bodyLarge,
+        color = uiColors.secondaryForeground,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+          .weight(1f, fill = false)
+          .clickable { onNavigateToArtist(track.artist) }
+      )
     }
-
-    Text(
-      text = subtitleText,
-      style = MaterialTheme.typography.bodyLarge,
-      color = uiColors.secondaryForeground,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-      textAlign = TextAlign.Center,
-      modifier = Modifier.height(22.dp)
-    )
   }
 }
 
