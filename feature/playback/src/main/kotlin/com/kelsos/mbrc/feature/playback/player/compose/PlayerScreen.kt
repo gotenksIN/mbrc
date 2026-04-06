@@ -655,7 +655,7 @@ private fun ReplaceCoverLyricsPanel(
       LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 48.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 72.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
       ) {
         itemsIndexed(displayLyrics) { index, displayText ->
@@ -748,7 +748,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(32.dp))
 
     ProgressSection(
       position = playingPosition,
@@ -758,7 +758,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     PlaybackControls(
       playbackState = playbackState,
@@ -768,7 +768,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(32.dp))
 
     VolumeSection(
       volumeState = volumeState,
@@ -778,7 +778,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(48.dp))
 
     PlayerBottomBar(
       hasLyrics = hasLyrics,
