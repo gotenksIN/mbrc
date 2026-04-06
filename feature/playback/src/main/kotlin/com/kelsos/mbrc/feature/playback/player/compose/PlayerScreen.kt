@@ -1040,13 +1040,13 @@ private fun TrackInfoPanel(
   ) {
     Text(
       text = track.title.ifEmpty { stringResource(R.string.unknown_title) },
-      style = MaterialTheme.typography.titleLarge,
+      style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
       fontWeight = FontWeight.Bold,
       color = uiColors.primaryForeground,
       maxLines = 1,
       overflow = TextOverflow.Ellipsis,
       textAlign = TextAlign.Center,
-      modifier = Modifier.height(28.dp)
+      modifier = Modifier.padding(vertical = 2.dp)
     )
 
     Spacer(modifier = Modifier.height(4.dp))
@@ -1061,7 +1061,7 @@ private fun TrackInfoPanel(
       if (track.album.isNotEmpty()) {
         Text(
           text = track.album,
-          style = MaterialTheme.typography.bodyLarge,
+          style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
           color = uiColors.secondaryForeground,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
@@ -1069,16 +1069,17 @@ private fun TrackInfoPanel(
           modifier = Modifier
             .weight(1f, fill = false)
             .clickable { onNavigateToAlbum(track.album, track.artist) }
+            .padding(vertical = 4.dp, horizontal = 2.dp)
         )
         Text(
           text = " - ",
-          style = MaterialTheme.typography.bodyLarge,
+          style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
           color = uiColors.secondaryForeground
         )
       }
       Text(
         text = artistText,
-        style = MaterialTheme.typography.bodyLarge,
+        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
         color = uiColors.secondaryForeground,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -1086,6 +1087,7 @@ private fun TrackInfoPanel(
         modifier = Modifier
           .weight(1f, fill = false)
           .clickable { onNavigateToArtist(track.artist) }
+          .padding(vertical = 4.dp, horizontal = 2.dp)
       )
     }
   }
