@@ -1,6 +1,5 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import com.android.build.gradle.internal.tasks.factory.dependsOn
-import io.gitlab.arturbosch.detekt.Detekt
 import java.io.FileInputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -15,7 +14,6 @@ plugins {
   alias(libs.plugins.crashlytics) apply false
   alias(libs.plugins.kotlinter)
   alias(libs.plugins.kover)
-  alias(libs.plugins.detekt)
   alias(libs.plugins.screenshot)
   alias(libs.plugins.aboutlibraries)
   alias(libs.plugins.baselineprofile)
@@ -282,12 +280,6 @@ baselineProfile {
   mergeIntoMain = true
 }
 
-detekt {
-  source.setFrom(files("src/main/java", "src/main/kotlin"))
-  config.setFrom(files(rootProject.file("config/detekt/detekt.yml")))
-  buildUponDefaultConfig = true
-}
-
 val dummyGoogleServicesJson: Configuration by configurations.creating {
   isCanBeResolved = true
   isCanBeConsumed = false
@@ -433,15 +425,6 @@ abstract class GenerateGoogleServicesJson : DefaultTask() {
 }
 
 tasks {
-  withType<Detekt> {
-    jvmTarget = "11"
-    reports {
-      sarif {
-        required.set(true)
-      }
-    }
-  }
-
   val copyDummyGoogleServicesJson by registering(GenerateGoogleServicesJson::class) {
     val googleServicesFile = file("google-services.json")
     onlyIf {

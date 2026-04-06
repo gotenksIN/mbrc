@@ -28,7 +28,12 @@ plugins {
   alias(libs.plugins.baselineprofile) apply false
   alias(libs.plugins.kotlinter) apply false
   alias(libs.plugins.kotlinParcelize) apply false
-  alias(libs.plugins.detekt)
+}
+
+val detektCli: Configuration by configurations.creating
+
+dependencies {
+  detektCli("io.gitlab.arturbosch.detekt:detekt-cli:1.23.8")
 }
 
 fun isNonStable(version: String): Boolean {
@@ -40,10 +45,6 @@ fun isNonStable(version: String): Boolean {
 
 
 allprojects {
-  apply {
-    plugin("io.gitlab.arturbosch.detekt")
-  }
-
   buildscript {
     repositories {
       google()
@@ -55,6 +56,38 @@ allprojects {
   repositories {
     google()
     mavenCentral()
+  }
+
+  val detektConfigPath = rootProject.file("config/detekt/detekt.yml").absolutePath
+
+  tasks.register<JavaExec>("detekt") {
+    group = "verification"
+    description = "Runs detekt static code analysis"
+    mainClass.set("io.gitlab.arturbosch.detekt.cli.Main")
+    classpath = rootProject.configurations["detektCli"]
+
+    val reportPath = layout.buildDirectory.file("reports/detekt/detekt.sarif").get().asFile.absolutePath
+    val srcJava = project.layout.projectDirectory.dir("src/main/java")
+    val srcKotlin = project.layout.projectDirectory.dir("src/main/kotlin")
+
+    doFirst {
+      val inputDirs = listOf(srcJava, srcKotlin)
+        .map { it.asFile }
+        .filter { it.exists() }
+
+      if (inputDirs.isEmpty()) {
+        throw StopExecutionException("No source files found")
+      }
+
+      val input = inputDirs.joinToString(",") { it.absolutePath }
+      
+      args(
+        "--input", input,
+        "--config", detektConfigPath,
+        "--build-upon-default-config",
+        "--report", "sarif:$reportPath"
+      )
+    }
   }
 }
 
