@@ -766,14 +766,9 @@ private fun PortraitPlayerLayout(
 
     Spacer(modifier = Modifier.height(32.dp))
 
-    TrackInfoWithFavourite(
+    TrackInfoPanel(
       track = playingTrack,
-      isFavourite = isFavorite,
-      isBanned = isBanned,
-      isStream = playingPosition.isStream,
       onTrackClick = onTrackInfoClick,
-      onFavouriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
-      onBanClick = { actions.toggleBan(isBanned, isFavorite) },
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 24.dp)
@@ -881,14 +876,9 @@ private fun TabletPlayerLayout(
       Spacer(modifier = Modifier.height(40.dp))
 
       // Track info
-      TrackInfoWithFavourite(
+      TrackInfoPanel(
         track = playingTrack,
-        isFavourite = isFavorite,
-        isBanned = isBanned,
-        isStream = playingPosition.isStream,
         onTrackClick = onTrackInfoClick,
-        onFavouriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
-        onBanClick = { actions.toggleBan(isBanned, isFavorite) },
         modifier = Modifier.fillMaxWidth()
       )
 
@@ -995,14 +985,9 @@ private fun LandscapePlayerLayout(
       verticalArrangement = Arrangement.Center
     ) {
       // Track info with favorite/ban
-      TrackInfoWithFavourite(
+      TrackInfoPanel(
         track = playingTrack,
-        isFavourite = isFavorite,
-        isBanned = isBanned,
-        isStream = playingPosition.isStream,
         onTrackClick = onTrackInfoClick,
-        onFavouriteClick = { actions.toggleFavorite(isFavorite, isBanned) },
-        onBanClick = { actions.toggleBan(isBanned, isFavorite) },
         modifier = Modifier.fillMaxWidth()
       )
 
@@ -1068,84 +1053,45 @@ private fun AlbumCover(painter: AsyncImagePainter, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun TrackInfoWithFavourite(
+private fun TrackInfoPanel(
   track: TrackInfo,
-  isFavourite: Boolean,
-  isBanned: Boolean,
-  isStream: Boolean,
   onTrackClick: () -> Unit,
-  onFavouriteClick: () -> Unit,
-  onBanClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val uiColors = LocalPlayerUiColors.current
-  Row(
-    modifier = modifier,
-    verticalAlignment = Alignment.CenterVertically
+  Column(
+    modifier = modifier.clickable(onClick = onTrackClick),
+    horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    // Ban button
-    IconButton(
-      onClick = onBanClick,
-      enabled = !isStream
-    ) {
-      Icon(
-        imageVector = Icons.Default.ThumbDown,
-        contentDescription = "Ban",
-        tint = if (isBanned) uiColors.primaryForeground else uiColors.disabledForeground,
-        modifier = Modifier.size(24.dp)
-      )
+    Text(
+      text = track.title.ifEmpty { stringResource(R.string.unknown_title) },
+      style = MaterialTheme.typography.titleLarge,
+      fontWeight = FontWeight.Bold,
+      color = uiColors.primaryForeground,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.height(28.dp)
+    )
+
+    Spacer(modifier = Modifier.height(4.dp))
+
+    val artistText = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
+    val subtitleText = if (track.album.isNotEmpty()) {
+      "${track.album} - $artistText"
+    } else {
+      artistText
     }
 
-    // Track info - centered
-    Column(
-      modifier = Modifier
-        .weight(1f)
-        .clickable(onClick = onTrackClick),
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-      Text(
-        text = track.title.ifEmpty { stringResource(R.string.unknown_title) },
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        color = uiColors.primaryForeground,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.height(28.dp)
-      )
-
-      Spacer(modifier = Modifier.height(4.dp))
-
-      val artistText = track.artist.ifEmpty { stringResource(R.string.unknown_artist) }
-      val subtitleText = if (track.album.isNotEmpty()) {
-        "${track.album} - $artistText"
-      } else {
-        artistText
-      }
-
-      Text(
-        text = subtitleText,
-        style = MaterialTheme.typography.bodyLarge,
-        color = uiColors.secondaryForeground,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.height(22.dp)
-      )
-    }
-
-    // Favourite button
-    IconButton(
-      onClick = onFavouriteClick,
-      enabled = !isStream
-    ) {
-      Icon(
-        imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-        contentDescription = "Favourite",
-        tint = if (isFavourite) uiColors.primaryForeground else uiColors.disabledForeground,
-        modifier = Modifier.size(24.dp)
-      )
-    }
+    Text(
+      text = subtitleText,
+      style = MaterialTheme.typography.bodyLarge,
+      color = uiColors.secondaryForeground,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      textAlign = TextAlign.Center,
+      modifier = Modifier.height(22.dp)
+    )
   }
 }
 
