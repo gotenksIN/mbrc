@@ -61,9 +61,6 @@ class PlayerViewModel(
   val trackDetails: StateFlow<TrackDetails> = appState.playingTrackDetails
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TrackDetails.EMPTY)
 
-  val showRatingOnPlayer: StateFlow<Boolean> = settingsManager.showRatingOnPlayerFlow
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
   val actions: IPlayerActions = PlayerActions(
     userActionUseCase = userActionUseCase,
     scope = viewModelScope,

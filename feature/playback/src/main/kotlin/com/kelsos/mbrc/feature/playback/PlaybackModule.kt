@@ -7,7 +7,6 @@ import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingRepository
 import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingRepositoryImpl
 import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingViewModel
 import com.kelsos.mbrc.feature.playback.player.PlayerViewModel
-import com.kelsos.mbrc.feature.playback.player.RatingDialogViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -40,5 +39,4 @@ val playbackModule = module {
   viewModelOf(::PlayerViewModel)
   viewModelOf(::LyricsViewModel)
   viewModelOf(::NowPlayingViewModel)
-  viewModelOf(::RatingDialogViewModel)
 }

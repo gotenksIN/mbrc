@@ -135,17 +135,14 @@ fun PlayerScreen(
   // Collect separate state flows for granular recomposition
   val playingTrack by viewModel.playingTrack.collectAsStateWithLifecycle()
   val playingPosition by viewModel.playingPosition.collectAsStateWithLifecycle()
-  val trackRating by viewModel.trackRating.collectAsStateWithLifecycle()
   val volumeState by viewModel.volumeState.collectAsStateWithLifecycle()
   val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
-  val isScrobbling by viewModel.isScrobbling.collectAsStateWithLifecycle()
   val trackDetails by viewModel.trackDetails.collectAsStateWithLifecycle()
   val playerScreenVisibilityTracker: PlayerScreenVisibilityTracker = koinInject()
 
   // Lyrics state
   val lyrics by lyricsViewModel.lyrics.collectAsStateWithLifecycle(initialValue = emptyList())
 
-  var showBottomSheet by remember { mutableStateOf(false) }
   var showOutputSelection by remember { mutableStateOf(false) }
   var showLyrics by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
@@ -161,7 +158,7 @@ fun PlayerScreen(
 
   // Compute scaffold configuration based on current state
   val topBarState = TopBarState.WithTitle(title)
-  val onOverflowClick: (() -> Unit)? = { showBottomSheet = true }
+  val onOverflowClick: (() -> Unit)? = null
   val darkTheme = isSystemInDarkTheme()
   val defaultBackground = MaterialTheme.colorScheme.background
   val topBarAlbumArtState = rememberAlbumArtState(
@@ -184,21 +181,6 @@ fun PlayerScreen(
     onDispose {
       insetsController.isAppearanceLightStatusBars = fallbackUseDarkStatusBarIcons
     }
-  }
-
-  if (showBottomSheet) {
-    PlayerBottomSheet(
-      isScrobbling = isScrobbling,
-      onScrobbleToggle = viewModel.actions.toggleScrobbling,
-      onShowTrackDetails = { showTrackDetails = true },
-      onGoToAlbum = playingTrack.album.takeIf { it.isNotEmpty() }?.let {
-        { onNavigateToAlbum(playingTrack.album, playingTrack.artist) }
-      },
-      onGoToArtist = playingTrack.artist.takeIf { it.isNotEmpty() }?.let {
-        { onNavigateToArtist(playingTrack.artist) }
-      },
-      onDismiss = { showBottomSheet = false }
-    )
   }
 
   if (showOutputSelection) {
@@ -228,14 +210,12 @@ fun PlayerScreen(
     PlayerScreenContent(
       playingTrack = playingTrack,
       playingPosition = playingPosition,
-      trackRating = trackRating,
       volumeState = volumeState,
       playbackState = playbackState,
       actions = viewModel.actions,
       lyrics = lyrics,
       showLyrics = showLyrics,
       hasLyrics = lyrics.isNotEmpty(),
-      showRatingOnPlayer = false,
       onTrackInfoClick = onNavigateToNowPlaying,
       onLyricsClick = {
         if (lyrics.isNotEmpty()) {
@@ -243,7 +223,6 @@ fun PlayerScreen(
         }
       },
       onOutputClick = { showOutputSelection = true },
-      onRatingClick = { showBottomSheet = true },
       albumArtState = topBarAlbumArtState,
       contentPadding = paddingValues
     )
@@ -254,18 +233,15 @@ fun PlayerScreen(
 internal fun PlayerScreenContent(
   playingTrack: TrackInfo,
   playingPosition: PlayingPosition,
-  trackRating: TrackRating,
   volumeState: VolumeState,
   playbackState: PlaybackState,
   actions: IPlayerActions,
   lyrics: List<String>,
   showLyrics: Boolean,
   hasLyrics: Boolean,
-  showRatingOnPlayer: Boolean,
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
-  onRatingClick: () -> Unit,
   albumArtState: AlbumArtState,
   contentPadding: PaddingValues = PaddingValues(),
   modifier: Modifier = Modifier
@@ -293,8 +269,6 @@ internal fun PlayerScreenContent(
     )
   )
 
-  val isFavorite = trackRating.lfmRating == LfmRating.Loved
-  val isBanned = trackRating.lfmRating == LfmRating.Banned
   val topInset = contentPadding.calculateTopPadding()
   val bottomInset = contentPadding.calculateBottomPadding()
   val playerUiColors = remember(albumArtState.colors.dominant) {
@@ -317,11 +291,7 @@ internal fun PlayerScreenContent(
           playingPosition = playingPosition,
           lyrics = lyrics,
           showLyrics = showLyrics,
-          isFavorite = isFavorite,
-          isBanned = isBanned,
           hasLyrics = hasLyrics,
-          rating = trackRating.rating,
-          showRating = showRatingOnPlayer,
           volumeState = volumeState,
           playbackState = playbackState,
           gradientBrush = gradientBrush,
@@ -330,8 +300,7 @@ internal fun PlayerScreenContent(
           actions = actions,
           onTrackInfoClick = onTrackInfoClick,
           onLyricsClick = onLyricsClick,
-          onOutputClick = onOutputClick,
-          onRatingClick = onRatingClick
+          onOutputClick = onOutputClick
         )
 
         isTablet -> TabletPlayerLayout(
@@ -340,11 +309,7 @@ internal fun PlayerScreenContent(
           playingPosition = playingPosition,
           lyrics = lyrics,
           showLyrics = showLyrics,
-          isFavorite = isFavorite,
-          isBanned = isBanned,
           hasLyrics = hasLyrics,
-          rating = trackRating.rating,
-          showRating = showRatingOnPlayer,
           volumeState = volumeState,
           playbackState = playbackState,
           gradientBrush = gradientBrush,
@@ -353,8 +318,7 @@ internal fun PlayerScreenContent(
           actions = actions,
           onTrackInfoClick = onTrackInfoClick,
           onLyricsClick = onLyricsClick,
-          onOutputClick = onOutputClick,
-          onRatingClick = onRatingClick
+          onOutputClick = onOutputClick
         )
 
         else -> PortraitPlayerLayout(
@@ -363,11 +327,7 @@ internal fun PlayerScreenContent(
           playingPosition = playingPosition,
           lyrics = lyrics,
           showLyrics = showLyrics,
-          isFavorite = isFavorite,
-          isBanned = isBanned,
           hasLyrics = hasLyrics,
-          rating = trackRating.rating,
-          showRating = showRatingOnPlayer,
           volumeState = volumeState,
           playbackState = playbackState,
           gradientBrush = gradientBrush,
@@ -376,8 +336,7 @@ internal fun PlayerScreenContent(
           actions = actions,
           onTrackInfoClick = onTrackInfoClick,
           onLyricsClick = onLyricsClick,
-          onOutputClick = onOutputClick,
-          onRatingClick = onRatingClick
+          onOutputClick = onOutputClick
         )
       }
     }
@@ -721,11 +680,7 @@ private fun PortraitPlayerLayout(
   playingPosition: PlayingPosition,
   lyrics: List<String>,
   showLyrics: Boolean,
-  isFavorite: Boolean,
-  isBanned: Boolean,
   hasLyrics: Boolean,
-  rating: Float?,
-  showRating: Boolean,
   volumeState: VolumeState,
   playbackState: PlaybackState,
   gradientBrush: Brush,
@@ -735,7 +690,6 @@ private fun PortraitPlayerLayout(
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
-  onRatingClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Column(
@@ -828,11 +782,7 @@ private fun TabletPlayerLayout(
   playingPosition: PlayingPosition,
   lyrics: List<String>,
   showLyrics: Boolean,
-  isFavorite: Boolean,
-  isBanned: Boolean,
   hasLyrics: Boolean,
-  rating: Float?,
-  showRating: Boolean,
   volumeState: VolumeState,
   playbackState: PlaybackState,
   gradientBrush: Brush,
@@ -842,7 +792,6 @@ private fun TabletPlayerLayout(
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
-  onRatingClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   // For tablets in portrait, use a centered layout with max width constraint
@@ -930,11 +879,7 @@ private fun LandscapePlayerLayout(
   playingPosition: PlayingPosition,
   lyrics: List<String>,
   showLyrics: Boolean,
-  isFavorite: Boolean,
-  isBanned: Boolean,
   hasLyrics: Boolean,
-  rating: Float?,
-  showRating: Boolean,
   volumeState: VolumeState,
   playbackState: PlaybackState,
   gradientBrush: Brush,
@@ -944,7 +889,6 @@ private fun LandscapePlayerLayout(
   onTrackInfoClick: () -> Unit,
   onLyricsClick: () -> Unit,
   onOutputClick: () -> Unit,
-  onRatingClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   Row(

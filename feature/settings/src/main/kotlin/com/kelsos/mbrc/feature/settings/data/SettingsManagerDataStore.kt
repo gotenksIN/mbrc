@@ -91,14 +91,6 @@ class SettingsManagerDataStore(
     preferences[PreferenceKeys.ALBUM_ARTISTS_ONLY] ?: DefaultValues.ALBUM_ARTISTS_ONLY
   }
 
-  override val halfStarRatingFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-    preferences[PreferenceKeys.HALF_STAR_RATING] ?: DefaultValues.HALF_STAR_RATING
-  }
-
-  override val showRatingOnPlayerFlow: Flow<Boolean> = dataStore.data.map { preferences ->
-    preferences[PreferenceKeys.SHOW_RATING_ON_PLAYER] ?: DefaultValues.SHOW_RATING_ON_PLAYER
-  }
-
   override val genreSortPreferenceFlow: Flow<GenreSortPreference> = dataStore.data.map { prefs ->
     val encoded = prefs[PreferenceKeys.GENRE_SORT] ?: DefaultValues.GENRE_SORT
     SortPreference.decode(encoded, GenreSortField::fromString, GenreSortField.NAME)
@@ -169,18 +161,6 @@ class SettingsManagerDataStore(
   override suspend fun setShouldDisplayOnlyAlbumArtist(onlyAlbumArtist: Boolean) {
     dataStore.edit { preferences ->
       preferences[PreferenceKeys.ALBUM_ARTISTS_ONLY] = onlyAlbumArtist
-    }
-  }
-
-  override suspend fun setHalfStarRating(enabled: Boolean) {
-    dataStore.edit { preferences ->
-      preferences[PreferenceKeys.HALF_STAR_RATING] = enabled
-    }
-  }
-
-  override suspend fun setShowRatingOnPlayer(enabled: Boolean) {
-    dataStore.edit { preferences ->
-      preferences[PreferenceKeys.SHOW_RATING_ON_PLAYER] = enabled
     }
   }
 

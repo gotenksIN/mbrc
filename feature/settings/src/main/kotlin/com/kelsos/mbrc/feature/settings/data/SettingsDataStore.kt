@@ -65,8 +65,6 @@ object SettingsDataStore {
     val LAST_VERSION_RUN = longPreferencesKey(LAST_VERSION_RUN_KEY_NAME)
     val REQUIRED_UPDATE_CHECK = longPreferencesKey("update_required_check")
     val CLIENT_UUID = stringPreferencesKey("uuid")
-    val HALF_STAR_RATING = booleanPreferencesKey("mbrc.settings.half_star_rating")
-    val SHOW_RATING_ON_PLAYER = booleanPreferencesKey("mbrc.settings.show_rating_on_player")
 
     // Library sorting preferences
     val GENRE_SORT = stringPreferencesKey("mbrc.library.sort.genre")
@@ -88,8 +86,6 @@ object SettingsDataStore {
     const val LAST_UPDATE_CHECK = 0L
     const val LAST_VERSION_RUN = 0L
     const val REQUIRED_UPDATE_CHECK = 0L
-    const val HALF_STAR_RATING = true
-    const val SHOW_RATING_ON_PLAYER = false
 
     // Library sorting defaults (format: "field:order")
     const val GENRE_SORT = "name:asc"
