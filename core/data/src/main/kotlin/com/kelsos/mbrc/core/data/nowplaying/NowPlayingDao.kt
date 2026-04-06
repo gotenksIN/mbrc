@@ -57,7 +57,9 @@ interface NowPlayingDao {
   @Query("delete from now_playing where position = :position")
   fun removeByPosition(position: Int): Int
 
-  @Query("update now_playing set position = position - 1 where position > :position ")
+  @Query(
+    "update now_playing set position = position - 1, sort_index = sort_index - 1 where position > :position "
+  )
   fun updateRemoved(position: Int): Int
 
   @Transaction
@@ -70,12 +72,12 @@ interface NowPlayingDao {
   @Query("select id from now_playing where position = :position")
   fun findIdByPosition(position: Int): Long
 
-  @Query("update now_playing set position = :position where id = :id")
+  @Query("update now_playing set position = :position, sort_index = :position where id = :id")
   fun updatePosition(id: Long, position: Int)
 
   @Query(
     """
-    update now_playing set position = position - 1
+    update now_playing set position = position - 1, sort_index = sort_index - 1
     where position > :from
     and position <= :to
     """
@@ -84,7 +86,7 @@ interface NowPlayingDao {
 
   @Query(
     """
-    update now_playing set position = position + 1
+    update now_playing set position = position + 1, sort_index = sort_index + 1
     where position < :from
     and position >= :to
     """

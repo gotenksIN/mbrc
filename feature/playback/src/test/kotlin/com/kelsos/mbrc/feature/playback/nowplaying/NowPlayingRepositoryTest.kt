@@ -60,6 +60,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/01_midnight_dreams.mp3",
         position = 1,
+        sortIndex = 1,
         dateAdded = System.currentTimeMillis() - 3600000, // 1 hour ago
         id = 1
       ),
@@ -68,6 +69,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/02_neon_lights.mp3",
         position = 2,
+        sortIndex = 2,
         dateAdded = System.currentTimeMillis() - 3590000,
         id = 2
       ),
@@ -76,6 +78,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/03_digital_rain.mp3",
         position = 3,
+        sortIndex = 3,
         dateAdded = System.currentTimeMillis() - 3580000,
         id = 3
       ),
@@ -84,6 +87,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/04_lost_in_the_city.mp3",
         position = 4,
+        sortIndex = 4,
         dateAdded = System.currentTimeMillis() - 3570000,
         id = 4
       ),
@@ -92,6 +96,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/05_synth_wave.mp3",
         position = 5,
+        sortIndex = 5,
         dateAdded = System.currentTimeMillis() - 3560000,
         id = 5
       ),
@@ -100,6 +105,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/06_circuit_breaker.mp3",
         position = 6,
+        sortIndex = 6,
         dateAdded = System.currentTimeMillis() - 3550000,
         id = 6
       ),
@@ -108,6 +114,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/07_electric_pulse.mp3",
         position = 7,
+        sortIndex = 7,
         dateAdded = System.currentTimeMillis() - 3540000,
         id = 7
       ),
@@ -116,6 +123,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/08_data_stream.mp3",
         position = 8,
+        sortIndex = 8,
         dateAdded = System.currentTimeMillis() - 3530000,
         id = 8
       ),
@@ -124,6 +132,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/09_virtual_reality.mp3",
         position = 9,
+        sortIndex = 9,
         dateAdded = System.currentTimeMillis() - 3520000,
         id = 9
       ),
@@ -132,6 +141,7 @@ class NowPlayingRepositoryTest : KoinTest {
         artist = "The Electric Horizon",
         path = "/music/electric_horizon/midnight_dreams/10_dawn_protocol.mp3",
         position = 10,
+        sortIndex = 10,
         dateAdded = System.currentTimeMillis() - 3510000,
         id = 10
       )
@@ -161,7 +171,7 @@ class NowPlayingRepositoryTest : KoinTest {
 
       repository.move(from, to)
 
-      val postMoveAlbumQueue = dao.all().sortedBy { it.position }
+      val postMoveAlbumQueue = dao.all()
 
       // Verify positions are still 1-10
       assertThat(
@@ -187,6 +197,10 @@ class NowPlayingRepositoryTest : KoinTest {
           it.id
         }
       ).containsExactlyElementsIn(expectedIdOrder).inOrder()
+
+      assertThat(postMoveAlbumQueue.map { it.sortIndex })
+        .containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        .inOrder()
     }
   }
 
@@ -201,7 +215,7 @@ class NowPlayingRepositoryTest : KoinTest {
 
       repository.move(from, to)
 
-      val postMoveAlbumQueue = dao.all().sortedBy { it.position }
+      val postMoveAlbumQueue = dao.all()
 
       // Verify positions are still 1-10
       assertThat(
@@ -230,6 +244,10 @@ class NowPlayingRepositoryTest : KoinTest {
           it.id
         }
       ).containsExactlyElementsIn(expectedIdOrder).inOrder()
+
+      assertThat(postMoveAlbumQueue.map { it.sortIndex })
+        .containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        .inOrder()
     }
   }
 

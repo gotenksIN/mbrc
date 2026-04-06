@@ -280,6 +280,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
 val MIGRATION_5_6 = object : Migration(5, 6) {
   override fun migrate(db: SupportSQLiteDatabase) {
     db.execSQL("ALTER TABLE now_playing ADD COLUMN sort_index INTEGER NOT NULL DEFAULT 0")
+    db.execSQL("UPDATE now_playing SET sort_index = position")
     db.execSQL("CREATE INDEX IF NOT EXISTS `now_playing_sort_index_idx` ON `now_playing` (`sort_index`)")
   }
 }
