@@ -66,5 +66,5 @@ val androidModule = module {
     bind<MediaIntentBuilder>()
     bind<AppLauncher>()
   }
-  singleOf(::AppNotificationManagerImpl) { bind<AppNotificationManager>() }
+  single<AppNotificationManager> { AppNotificationManagerImpl(get(), get(), get(), get(), get()) }
 }
