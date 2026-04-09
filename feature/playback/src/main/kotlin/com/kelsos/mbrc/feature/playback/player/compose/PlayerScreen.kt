@@ -657,6 +657,7 @@ private fun BlurredPlayerBackdrop(
 @Composable
 private fun CoverOrLyricsPanel(
   painter: AsyncImagePainter,
+  playingTrack: TrackInfo,
   lyrics: List<String>,
   playingPosition: PlayingPosition,
   showLyrics: Boolean,
@@ -665,6 +666,9 @@ private fun CoverOrLyricsPanel(
 ) {
   if (showLyrics && lyrics.isNotEmpty()) {
     ReplaceCoverLyricsPanel(
+      trackResetKey = playingTrack.path.ifBlank {
+        "${playingTrack.artist}\n${playingTrack.title}\n${playingTrack.album}\n${playingTrack.year}"
+      },
       lyrics = lyrics,
       playingPosition = playingPosition,
       onSeek = onSeek,
@@ -677,6 +681,7 @@ private fun CoverOrLyricsPanel(
 
 @Composable
 private fun ReplaceCoverLyricsPanel(
+  trackResetKey: String,
   lyrics: List<String>,
   playingPosition: PlayingPosition,
   onSeek: (Int) -> Unit,
@@ -688,7 +693,7 @@ private fun ReplaceCoverLyricsPanel(
   val activeLineIndex = remember(lyricTimestamps, playingPosition.current) {
     findActiveLyricIndex(lyricTimestamps, playingPosition.current)
   }
-  val listState = rememberLazyListState()
+  val listState = remember(trackResetKey) { androidx.compose.foundation.lazy.LazyListState() }
 
   LaunchedEffect(activeLineIndex) {
     if (activeLineIndex >= 0) {
@@ -792,6 +797,7 @@ private fun PortraitPlayerLayout(
       val size = minDp(maxWidth, maxHeight)
       CoverOrLyricsPanel(
         painter = painter,
+        playingTrack = playingTrack,
         lyrics = lyrics,
         playingPosition = playingPosition,
         showLyrics = showLyrics,
@@ -896,6 +902,7 @@ private fun TabletPlayerLayout(
         val size = minDp(minDp(maxWidth, maxHeight), 320.dp)
         CoverOrLyricsPanel(
           painter = painter,
+          playingTrack = playingTrack,
           lyrics = lyrics,
           playingPosition = playingPosition,
           showLyrics = showLyrics,
@@ -1025,6 +1032,7 @@ private fun LandscapePlayerLayout(
     ) {
       CoverOrLyricsPanel(
         painter = painter,
+        playingTrack = playingTrack,
         lyrics = lyrics,
         playingPosition = playingPosition,
         showLyrics = showLyrics,
