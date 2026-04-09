@@ -77,7 +77,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -87,7 +86,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.min as minDp
@@ -784,7 +782,7 @@ private fun PortraitPlayerLayout(
       modifier = Modifier
         .padding(horizontal = 24.dp)
         .fillMaxWidth()
-        .weight(1f),
+        .weight(320f),
       contentAlignment = Alignment.Center
     ) {
       val size = minDp(maxWidth, maxHeight)
@@ -798,7 +796,7 @@ private fun PortraitPlayerLayout(
       )
     }
 
-    Spacer(modifier = Modifier.height(32.dp))
+    Spacer(modifier = Modifier.weight(32f))
 
     TrackInfoPanel(
       track = playingTrack,
@@ -809,7 +807,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(32.dp))
+    Spacer(modifier = Modifier.weight(32f))
 
     ProgressSection(
       position = playingPosition,
@@ -819,7 +817,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.weight(24f))
 
     PlaybackControls(
       playbackState = playbackState,
@@ -829,7 +827,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(32.dp))
+    Spacer(modifier = Modifier.weight(32f))
 
     VolumeSection(
       volumeState = volumeState,
@@ -839,7 +837,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(48.dp))
+    Spacer(modifier = Modifier.weight(48f))
 
     PlayerBottomBar(
       hasLyrics = hasLyrics,
@@ -853,7 +851,7 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.height(32.dp))
+    Spacer(modifier = Modifier.weight(32f))
   }
 }
 
@@ -889,72 +887,47 @@ private fun TabletPlayerLayout(
       ),
     contentAlignment = Alignment.Center
   ) {
-    SubcomposeLayout(
+    Column(
       modifier = Modifier
         .widthIn(max = 500.dp)
-        .padding(32.dp)
-    ) { constraints ->
-      val relaxedConstraints = constraints.copy(minWidth = 0, minHeight = 0)
-      val controlsPlaceables = subcompose(TabletPlayerLayoutSlot.Controls) {
-        TabletPlayerControls(
-          playingTrack = playingTrack,
+        .padding(32.dp),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      BoxWithConstraints(
+        modifier = Modifier
+          .fillMaxWidth()
+          .weight(1f),
+        contentAlignment = Alignment.Center
+      ) {
+        val size = minDp(minDp(maxWidth, maxHeight), 320.dp)
+        CoverOrLyricsPanel(
+          painter = painter,
+          lyrics = lyrics,
           playingPosition = playingPosition,
-          hasLyrics = hasLyrics,
           showLyrics = showLyrics,
-          volumeState = volumeState,
-          playbackState = playbackState,
-          actions = actions,
-          onNavigateToAlbum = onNavigateToAlbum,
-          onNavigateToArtist = onNavigateToArtist,
-          onLyricsClick = onLyricsClick,
-          onOutputClick = onOutputClick,
-          onQueueClick = onQueueClick,
-          onTrackDetailsClick = onTrackDetailsClick,
-          modifier = Modifier.fillMaxWidth()
-        )
-      }.map { it.measure(relaxedConstraints) }
-
-      val controlsHeight = controlsPlaceables.maxOfOrNull { it.height } ?: 0
-      val coverSize = min(constraints.maxWidth, (constraints.maxHeight - controlsHeight).coerceAtLeast(0))
-      val coverSizeDp = coverSize.toDp()
-
-      val coverPlaceables = subcompose(TabletPlayerLayoutSlot.Cover) {
-        Box(
-          modifier = Modifier.fillMaxWidth(),
-          contentAlignment = Alignment.Center
-        ) {
-          CoverOrLyricsPanel(
-            painter = painter,
-            lyrics = lyrics,
-            playingPosition = playingPosition,
-            showLyrics = showLyrics,
-            onSeek = actions.seek,
-            modifier = Modifier.size(minDp(coverSizeDp, 320.dp))
-          )
-        }
-      }.map {
-        it.measure(
-          Constraints(
-            minWidth = constraints.maxWidth,
-            maxWidth = constraints.maxWidth,
-            minHeight = coverSize,
-            maxHeight = coverSize
-          )
+          onSeek = actions.seek,
+          modifier = Modifier.size(size)
         )
       }
 
-      val layoutHeight = min(constraints.maxHeight, coverSize + controlsHeight)
-      layout(constraints.maxWidth, layoutHeight) {
-        coverPlaceables.forEach { it.placeRelative(x = 0, y = 0) }
-        controlsPlaceables.forEach { it.placeRelative(x = 0, y = coverSize) }
-      }
+      TabletPlayerControls(
+        playingTrack = playingTrack,
+        playingPosition = playingPosition,
+        hasLyrics = hasLyrics,
+        showLyrics = showLyrics,
+        volumeState = volumeState,
+        playbackState = playbackState,
+        actions = actions,
+        onNavigateToAlbum = onNavigateToAlbum,
+        onNavigateToArtist = onNavigateToArtist,
+        onLyricsClick = onLyricsClick,
+        onOutputClick = onOutputClick,
+        onQueueClick = onQueueClick,
+        onTrackDetailsClick = onTrackDetailsClick,
+        modifier = Modifier.fillMaxWidth()
+      )
     }
   }
-}
-
-private enum class TabletPlayerLayoutSlot {
-  Cover,
-  Controls
 }
 
 @Composable
