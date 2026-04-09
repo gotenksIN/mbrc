@@ -16,15 +16,17 @@ import com.kelsos.mbrc.feature.minicontrol.MiniControlState
 fun MiniControlPlayingLightPreview() {
   RemoteTheme(darkTheme = false) {
     MiniControlContent(
-      state = MiniControlState(
-        playingTrack = BasicTrackInfo(
-          artist = "Parov Stelar",
-          title = "All Night",
-          album = "The Princess"
-        ),
-        playingPosition = PlayingPosition(current = 45000, total = 180000),
-        playingState = PlayerState.Playing
-      ),
+      stateProvider = {
+        MiniControlState(
+          playingTrack = BasicTrackInfo(
+            artist = "Parov Stelar",
+            title = "All Night",
+            album = "The Princess"
+          ),
+          playingPosition = PlayingPosition(current = 45000, total = 180000),
+          playingState = PlayerState.Playing
+        )
+      },
       onNavigateToPlayer = {},
       onPreviousClick = {},
       onPlayPauseClick = {},
@@ -39,15 +41,17 @@ fun MiniControlPlayingLightPreview() {
 fun MiniControlPlayingDarkPreview() {
   RemoteTheme(darkTheme = true) {
     MiniControlContent(
-      state = MiniControlState(
-        playingTrack = BasicTrackInfo(
-          artist = "Parov Stelar",
-          title = "All Night",
-          album = "The Princess"
-        ),
-        playingPosition = PlayingPosition(current = 45000, total = 180000),
-        playingState = PlayerState.Playing
-      ),
+      stateProvider = {
+        MiniControlState(
+          playingTrack = BasicTrackInfo(
+            artist = "Parov Stelar",
+            title = "All Night",
+            album = "The Princess"
+          ),
+          playingPosition = PlayingPosition(current = 45000, total = 180000),
+          playingState = PlayerState.Playing
+        )
+      },
       onNavigateToPlayer = {},
       onPreviousClick = {},
       onPlayPauseClick = {},
@@ -62,15 +66,17 @@ fun MiniControlPlayingDarkPreview() {
 fun MiniControlPausedLightPreview() {
   RemoteTheme(darkTheme = false) {
     MiniControlContent(
-      state = MiniControlState(
-        playingTrack = BasicTrackInfo(
-          artist = "Caravan Palace",
-          title = "Lone Digger",
-          album = "Robot Face"
-        ),
-        playingPosition = PlayingPosition(current = 120000, total = 240000),
-        playingState = PlayerState.Paused
-      ),
+      stateProvider = {
+        MiniControlState(
+          playingTrack = BasicTrackInfo(
+            artist = "Caravan Palace",
+            title = "Lone Digger",
+            album = "Robot Face"
+          ),
+          playingPosition = PlayingPosition(current = 120000, total = 240000),
+          playingState = PlayerState.Paused
+        )
+      },
       onNavigateToPlayer = {},
       onPreviousClick = {},
       onPlayPauseClick = {},
@@ -85,15 +91,17 @@ fun MiniControlPausedLightPreview() {
 fun MiniControlPausedDarkPreview() {
   RemoteTheme(darkTheme = true) {
     MiniControlContent(
-      state = MiniControlState(
-        playingTrack = BasicTrackInfo(
-          artist = "Caravan Palace",
-          title = "Lone Digger",
-          album = "Robot Face"
-        ),
-        playingPosition = PlayingPosition(current = 120000, total = 240000),
-        playingState = PlayerState.Paused
-      ),
+      stateProvider = {
+        MiniControlState(
+          playingTrack = BasicTrackInfo(
+            artist = "Caravan Palace",
+            title = "Lone Digger",
+            album = "Robot Face"
+          ),
+          playingPosition = PlayingPosition(current = 120000, total = 240000),
+          playingState = PlayerState.Paused
+        )
+      },
       onNavigateToPlayer = {},
       onPreviousClick = {},
       onPlayPauseClick = {},
