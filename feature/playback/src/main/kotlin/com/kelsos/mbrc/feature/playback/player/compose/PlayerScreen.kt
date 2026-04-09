@@ -100,7 +100,6 @@ import coil3.toBitmap
 import com.kelsos.mbrc.core.common.state.LfmRating
 import com.kelsos.mbrc.core.common.state.PlayerState
 import com.kelsos.mbrc.core.common.state.PlayingPosition
-import com.kelsos.mbrc.core.common.state.PlayerScreenVisibilityTracker
 import com.kelsos.mbrc.core.common.state.Repeat
 import com.kelsos.mbrc.core.common.state.ShuffleMode
 import com.kelsos.mbrc.core.common.state.TrackInfo
@@ -139,7 +138,6 @@ fun PlayerScreen(
   val volumeState by viewModel.volumeState.collectAsStateWithLifecycle()
   val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
   val trackDetails by viewModel.trackDetails.collectAsStateWithLifecycle()
-  val playerScreenVisibilityTracker: PlayerScreenVisibilityTracker = koinInject()
 
   // Lyrics state
   val lyrics by lyricsViewModel.lyrics.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -148,13 +146,6 @@ fun PlayerScreen(
   var showLyrics by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
   var showQueueBottomSheet by remember { mutableStateOf(false) }
-
-  DisposableEffect(Unit) {
-    playerScreenVisibilityTracker.isVisible = true
-    onDispose {
-      playerScreenVisibilityTracker.isVisible = false
-    }
-  }
 
   val title = stringResource(R.string.nav_now_playing)
 
