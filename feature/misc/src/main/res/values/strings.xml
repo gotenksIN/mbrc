@@ -20,6 +20,7 @@
   <!-- Output selection -->
   <string name="output_selection__no_devices">No output devices found</string>
   <string name="output_selection_title">Select Output</string>
+  <string name="output_selection_mute_description">Toggle volume mute</string>
 
   <!-- What\'s New -->
   <string name="entry_type_bug">Bug fix</string>

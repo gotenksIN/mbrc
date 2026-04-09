@@ -244,7 +244,7 @@ private fun VolumeSection(
       } else {
         Icons.AutoMirrored.Filled.VolumeUp
       },
-      contentDescription = null,
+      contentDescription = stringResource(R.string.output_selection_mute_description),
       tint = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier
         .size(24.dp)
