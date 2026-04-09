@@ -14,6 +14,9 @@ import java.net.Socket
 import java.net.SocketAddress
 import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.pow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -66,43 +69,43 @@ class ClientConnectionManagerImpl(
   private val connectionConfig = ConnectionConfig()
   private var currentCycleInfo: ConnectionCycleInfo? = null
 
-  @Volatile
-  private var isStopping = false
+  private val isStopping = AtomicBoolean(false)
 
   // Track pending socket for cancellation during connect
-  @Volatile
-  private var pendingSocket: Socket? = null
+  private val pendingSocket = AtomicReference<Socket?>(null)
 
   override fun start(cycleInfo: ConnectionCycleInfo?) {
-    // Don't restart if already connected
-    val currentStatus = connectionState.connection.value
-    if (currentStatus == ConnectionStatus.Connected) {
-      Timber.v("Already connected, ignoring start request")
-      return
-    }
+    synchronized(this) {
+      // Don't restart if already connected
+      val currentStatus = connectionState.connection.value
+      if (currentStatus == ConnectionStatus.Connected) {
+        Timber.v("Already connected, ignoring start request")
+        return
+      }
 
-    stop()
-    isStopping = false
-    onStart() // Reset coroutine scope after stop
-    currentCycleInfo = cycleInfo
-    launch {
-      if (cycleInfo != null) {
-        delay(DELAY_MS)
-      }
-      if (isStopping) return@launch
-      // Double-check in case connection succeeded during delay
-      val statusAfterDelay = connectionState.connection.firstOrNull()
-      if (statusAfterDelay == ConnectionStatus.Connected) {
-        return@launch
-      }
-      // Emit connecting state only if not already connected
-      connectionState.updateConnection(
-        ConnectionStatus.Connecting(
-          cycle = cycleInfo?.cycle,
-          maxCycles = cycleInfo?.maxCycles ?: DEFAULT_MAX_CYCLES
+      stopLocked()
+      isStopping.set(false)
+      onStart() // Reset coroutine scope after stop
+      currentCycleInfo = cycleInfo
+      launch {
+        if (cycleInfo != null) {
+          delay(DELAY_MS)
+        }
+        if (isStopping.get()) return@launch
+        // Double-check in case connection succeeded during delay
+        val statusAfterDelay = connectionState.connection.firstOrNull()
+        if (statusAfterDelay == ConnectionStatus.Connected) {
+          return@launch
+        }
+        // Emit connecting state only if not already connected
+        connectionState.updateConnection(
+          ConnectionStatus.Connecting(
+            cycle = cycleInfo?.cycle,
+            maxCycles = cycleInfo?.maxCycles ?: DEFAULT_MAX_CYCLES
+          )
         )
-      )
-      attemptConnection()
+        attemptConnection()
+      }
     }
   }
 
@@ -121,7 +124,7 @@ class ClientConnectionManagerImpl(
   private suspend fun attemptConnectionWithRetry(address: SocketAddress) {
     repeat(connectionConfig.maxRetries) { attempt ->
       // Check if stop was requested
-      if (isStopping) {
+      if (isStopping.get()) {
         Timber.v("Connection attempt cancelled - stop requested")
         return
       }
@@ -139,7 +142,7 @@ class ClientConnectionManagerImpl(
         delay(delayMs)
 
         // Check again after delay
-        if (isStopping) {
+        if (isStopping.get()) {
           Timber.v("Connection attempt cancelled after delay - stop requested")
           return
         }
@@ -148,7 +151,7 @@ class ClientConnectionManagerImpl(
       val result = runCatching { connectWithTracking(address) }
       result.fold(
         onSuccess = { socket ->
-          if (isStopping) {
+          if (isStopping.get()) {
             // Stop was requested during connect, close the socket
             Timber.v("Connection cancelled during connect - closing socket")
             runCatching { socket.close() }
@@ -159,7 +162,7 @@ class ClientConnectionManagerImpl(
           return
         },
         onFailure = { exception ->
-          if (isStopping) {
+          if (isStopping.get()) {
             Timber.v("Connection attempt cancelled - stop requested")
             return
           }
@@ -179,7 +182,15 @@ class ClientConnectionManagerImpl(
 
   private fun connectWithTracking(address: SocketAddress): Socket {
     val socket = Socket()
-    pendingSocket = socket
+    pendingSocket.set(socket)
+    
+    // Check if we were stopped while creating the socket
+    if (isStopping.get()) {
+      runCatching { socket.close() }
+      pendingSocket.compareAndSet(socket, null)
+      throw IOException("Stopped before connect")
+    }
+
     try {
       socket.soTimeout = Connection.SO_TIMEOUT
       socket.tcpNoDelay = true
@@ -187,7 +198,7 @@ class ClientConnectionManagerImpl(
       socket.connect(address, Connection.CONNECT_TIMEOUT)
       return socket
     } finally {
-      pendingSocket = null
+      pendingSocket.compareAndSet(socket, null)
     }
   }
 
@@ -368,21 +379,27 @@ class ClientConnectionManagerImpl(
   }
 
   override fun stop() {
+    synchronized(this) {
+      stopLocked()
+    }
+  }
+
+  private fun stopLocked() {
     Timber.v("Stopping connection manager")
-    isStopping = true
+    isStopping.set(true)
     currentCycleInfo = null
 
     // Cancel all coroutines (including connection attempts)
     onStop()
 
     // Close any pending socket that's in the middle of connecting
-    pendingSocket?.let { socket ->
+    pendingSocket.getAndSet(null)?.let { socket ->
       Timber.v("Closing pending socket during stop")
       runCatching { socket.close() }
-      pendingSocket = null
     }
 
     connection?.cleanup()
+    connection = null
     activityChecker.setPingTimeoutListener(null)
     activityChecker.stop()
 
@@ -408,10 +425,9 @@ class Connection(
   private val _messages = MutableSharedFlow<SocketMessage>(extraBufferCapacity = 64)
   val messages: Flow<SocketMessage> get() = _messages
 
-  @Volatile
-  private var isCleanedUp = false
+  private val isCleanedUp = AtomicBoolean(false)
 
-  val isConnected get() = !isCleanedUp &&
+  val isConnected get() = !isCleanedUp.get() &&
     socket.isConnected &&
     !socket.isClosed &&
     isSocketHealthy()
@@ -429,13 +445,14 @@ class Connection(
   )
 
   fun cleanup() {
-    if (isCleanedUp) return
-    isCleanedUp = true
+    if (!isCleanedUp.compareAndSet(false, true)) return
 
     runCatching {
-      if (sink.isOpen) {
-        sink.flush()
-        sink.close()
+      synchronized(sink) {
+        if (sink.isOpen) {
+          sink.flush()
+          sink.close()
+        }
       }
     }.onFailure { Timber.w(it, "Failed to close sink") }
 
@@ -459,9 +476,12 @@ class Connection(
     }
     val address = socket.remoteSocketAddress
     Timber.v("Sending to mbrc:/$address (connected: $isConnected)::$message")
-    adapter.toJson(sink, message)
-    sink.writeUtf8(NEWLINE)
-    sink.flush()
+    synchronized(sink) {
+      if (isCleanedUp.get()) return@runCatching
+      adapter.toJson(sink, message)
+      sink.writeUtf8(NEWLINE)
+      sink.flush()
+    }
   }
 
   private suspend fun emitMessages(rawMessage: String) {
@@ -491,22 +511,21 @@ class Connection(
         val throwable = result.exceptionOrNull()
         Timber.e(throwable, "Failed processing message: $reply")
         // If we consistently fail to parse messages, the connection might be corrupted
-        messageParseFailureCount++
-        if (messageParseFailureCount >= MAX_PARSE_FAILURES) {
+        val currentFailures = messageParseFailureCount.incrementAndGet()
+        if (currentFailures >= MAX_PARSE_FAILURES) {
           Timber.w(
-            "Too many message parse failures ($messageParseFailureCount), treating as connection failure"
+            "Too many message parse failures ($currentFailures), treating as connection failure"
           )
           throw IOException("Message parsing consistently failing - connection corrupted")
         }
       } else {
         // Reset failure count on successful parse
-        messageParseFailureCount = 0
+        messageParseFailureCount.set(0)
       }
     }
   }
 
-  @Volatile
-  private var messageParseFailureCount = 0
+  private val messageParseFailureCount = AtomicInteger(0)
 
   suspend fun listen() {
     try {
@@ -522,7 +541,7 @@ class Connection(
         }
       }
     } catch (e: IOException) {
-      if (!isCleanedUp) {
+      if (!isCleanedUp.get()) {
         Timber.e(e, "Listener terminated due to IO error")
       }
     } finally {

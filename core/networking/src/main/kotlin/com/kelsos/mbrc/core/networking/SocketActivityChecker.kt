@@ -2,102 +2,83 @@ package com.kelsos.mbrc.core.networking
 
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 typealias Listener = () -> Unit
 
 class SocketActivityChecker(dispatchers: AppCoroutineDispatchers) {
-  private var deferred: Deferred<Unit>? = null
+  private val timeoutJob = AtomicReference<Job?>(null)
   private var listener: Listener? = null
   private val job = SupervisorJob()
   private val scope = CoroutineScope(job + dispatchers.network)
 
-  @Volatile
-  private var isRunning = false
-
-  @Volatile
-  private var consecutiveTimeouts = 0
+  private val isRunning = AtomicBoolean(false)
+  private val consecutiveTimeouts = AtomicInteger(0)
 
   fun start() {
-    if (isRunning) {
+    if (!isRunning.compareAndSet(false, true)) {
       Timber.v("Activity checker already running")
       return
     }
 
-    isRunning = true
-    consecutiveTimeouts = 0
-    scope.launch {
-      Timber.v("Starting activity checker")
-      schedule()
-    }
+    consecutiveTimeouts.set(0)
+    Timber.v("Starting activity checker")
+    schedule()
   }
 
-  private suspend fun schedule() {
-    cancel()
-    if (!isRunning) return
+  private fun schedule() {
+    if (!isRunning.get()) return
 
-    deferred =
-      scope.async {
-        delay(DELAY_MS)
-        if (!isRunning) return@async
+    val newJob = scope.launch {
+      delay(DELAY_MS)
+      if (!isRunning.get()) return@launch
 
-        consecutiveTimeouts++
-        Timber.v("Ping timeout #$consecutiveTimeouts after %d ms", DELAY_MS)
+      val count = consecutiveTimeouts.incrementAndGet()
+      Timber.v("Ping timeout #$count after %d ms", DELAY_MS)
 
-        val result = runCatching {
-          listener?.invoke()
-        }
-
-        if (result.isFailure) {
-          Timber.e(result.exceptionOrNull(), "calling the onTimeout method failed")
-        }
-
-        // Reset consecutive timeout count after successful timeout handling
-        if (result.isSuccess) {
-          consecutiveTimeouts = 0
-        }
+      val result = runCatching {
+        listener?.invoke()
       }
-  }
 
-  private suspend fun cancel() {
-    deferred?.run {
-      if (isActive) {
-        cancelAndJoin()
+      if (result.isFailure) {
+        Timber.e(result.exceptionOrNull(), "calling the onTimeout method failed")
+      }
+
+      if (result.isSuccess) {
+        consecutiveTimeouts.set(0)
       }
     }
+    
+    timeoutJob.getAndSet(newJob)?.cancel()
   }
 
   fun stop() {
-    if (!isRunning) {
+    if (!isRunning.compareAndSet(true, false)) {
       Timber.v("Activity checker already stopped")
       return
     }
 
     Timber.v("Stopping activity checker")
-    isRunning = false
-    consecutiveTimeouts = 0
-    scope.launch { cancel() }
+    consecutiveTimeouts.set(0)
+    timeoutJob.getAndSet(null)?.cancel()
   }
 
   fun ping() {
-    if (!isRunning) {
+    if (!isRunning.get()) {
       Timber.v("Received ping but activity checker is not running")
       return
     }
 
     Timber.v("Received ping - resetting timeout")
-    consecutiveTimeouts = 0 // Reset timeout count on successful ping
-    scope.launch {
-      if (isRunning) {
-        schedule()
-      }
-    }
+    consecutiveTimeouts.set(0)
+    schedule()
   }
 
   fun setPingTimeoutListener(listener: Listener?) {
@@ -109,7 +90,7 @@ class SocketActivityChecker(dispatchers: AppCoroutineDispatchers) {
     private const val MAX_CONSECUTIVE_TIMEOUTS = 3
   }
 
-  fun getTimeoutCount(): Int = consecutiveTimeouts
+  fun getTimeoutCount(): Int = consecutiveTimeouts.get()
 
-  fun isHealthy(): Boolean = isRunning && consecutiveTimeouts < MAX_CONSECUTIVE_TIMEOUTS
+  fun isHealthy(): Boolean = isRunning.get() && consecutiveTimeouts.get() < MAX_CONSECUTIVE_TIMEOUTS
 }
