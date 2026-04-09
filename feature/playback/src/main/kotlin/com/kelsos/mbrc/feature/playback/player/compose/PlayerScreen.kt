@@ -772,26 +772,27 @@ private fun PortraitPlayerLayout(
   Column(
     modifier = modifier
       .fillMaxSize()
-      .verticalScroll(rememberScrollState())
       .padding(
         top = topInset + 8.dp,
         bottom = bottomInset + 20.dp
       ),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    Box(
+    androidx.compose.foundation.layout.BoxWithConstraints(
       modifier = Modifier
         .padding(horizontal = 24.dp)
         .fillMaxWidth()
-        .aspectRatio(1f)
+        .weight(1f),
+      contentAlignment = Alignment.Center
     ) {
+      val size = androidx.compose.ui.unit.min(maxWidth, maxHeight)
       CoverOrLyricsPanel(
         painter = painter,
         lyrics = lyrics,
         playingPosition = playingPosition,
         showLyrics = showLyrics,
         onSeek = actions.seek,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.size(size)
       )
     }
 
@@ -889,20 +890,27 @@ private fun TabletPlayerLayout(
     Column(
       modifier = Modifier
         .widthIn(max = 500.dp)
-        .verticalScroll(rememberScrollState())
+        .fillMaxHeight()
         .padding(32.dp),
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       // Album cover
-      CoverOrLyricsPanel(
-        painter = painter,
-        lyrics = lyrics,
-        playingPosition = playingPosition,
-        showLyrics = showLyrics,
-        onSeek = actions.seek,
+      androidx.compose.foundation.layout.BoxWithConstraints(
         modifier = Modifier
-          .size(320.dp)
-      )
+          .fillMaxWidth()
+          .weight(1f),
+        contentAlignment = Alignment.Center
+      ) {
+        val size = androidx.compose.ui.unit.min(androidx.compose.ui.unit.min(maxWidth, maxHeight), 320.dp)
+        CoverOrLyricsPanel(
+          painter = painter,
+          lyrics = lyrics,
+          playingPosition = playingPosition,
+          showLyrics = showLyrics,
+          onSeek = actions.seek,
+          modifier = Modifier.size(size)
+        )
+      }
 
       Spacer(modifier = Modifier.height(40.dp))
 
