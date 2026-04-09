@@ -1010,10 +1010,10 @@ private fun LandscapePlayerLayout(
     modifier = modifier
       .fillMaxSize()
       .padding(
-        top = topInset + PlayerConstants.CONTENT_PADDING,
+        top = topInset + 8.dp,
         start = PlayerConstants.CONTENT_PADDING,
         end = PlayerConstants.CONTENT_PADDING,
-        bottom = bottomInset + PlayerConstants.CONTENT_PADDING
+        bottom = bottomInset + 8.dp
       ),
     horizontalArrangement = Arrangement.spacedBy(32.dp),
     verticalAlignment = Alignment.CenterVertically
@@ -1043,6 +1043,8 @@ private fun LandscapePlayerLayout(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.Center
     ) {
+      Spacer(modifier = Modifier.weight(1f))
+
       // Track info with favorite/ban
       TrackInfoPanel(
         track = playingTrack,
@@ -1051,7 +1053,7 @@ private fun LandscapePlayerLayout(
         modifier = Modifier.fillMaxWidth()
       )
 
-      Spacer(modifier = Modifier.height(24.dp))
+      Spacer(modifier = Modifier.weight(1f))
 
       // Progress bar
       ProgressSection(
@@ -1060,7 +1062,7 @@ private fun LandscapePlayerLayout(
         modifier = Modifier.fillMaxWidth()
       )
 
-      Spacer(modifier = Modifier.height(16.dp))
+      Spacer(modifier = Modifier.weight(0.5f))
 
       // Playback controls
       PlaybackControls(
@@ -1069,7 +1071,7 @@ private fun LandscapePlayerLayout(
         modifier = Modifier.fillMaxWidth()
       )
 
-      Spacer(modifier = Modifier.height(24.dp))
+      Spacer(modifier = Modifier.weight(1f))
 
       PlayerBottomBar(
         hasLyrics = hasLyrics,
@@ -1080,6 +1082,8 @@ private fun LandscapePlayerLayout(
         onTrackDetailsClick = onTrackDetailsClick,
         modifier = Modifier.fillMaxWidth()
       )
+
+      Spacer(modifier = Modifier.weight(0.5f))
     }
   }
 }
