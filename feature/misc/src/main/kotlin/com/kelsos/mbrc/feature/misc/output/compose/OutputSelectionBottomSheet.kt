@@ -1,6 +1,8 @@
 package com.kelsos.mbrc.feature.misc.output.compose
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,10 +15,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -25,8 +31,10 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,13 +45,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kelsos.mbrc.core.common.utilities.AppError
 import com.kelsos.mbrc.core.common.utilities.Outcome
 import com.kelsos.mbrc.core.networking.dto.OutputResponse
+import com.kelsos.mbrc.core.ui.compose.ThinSlider
 import com.kelsos.mbrc.feature.misc.R
 import com.kelsos.mbrc.feature.misc.output.OutputSelectionViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+
+private const val VOLUME_MAX = 100f
+private const val SLIDER_DEBOUNCE_MS = 1000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OutputSelectionBottomSheet(
+  volume: Int,
+  isMuted: Boolean,
+  onVolumeChange: (Int) -> Unit,
+  onMuteToggle: () -> Unit,
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   viewModel: OutputSelectionViewModel = koinViewModel()
@@ -116,6 +134,21 @@ fun OutputSelectionBottomSheet(
         )
       }
 
+      VolumeSection(
+        volume = volume,
+        isMuted = isMuted,
+        onVolumeChange = onVolumeChange,
+        onMuteToggle = onMuteToggle,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 8.dp)
+      )
+
+      HorizontalDivider(
+        modifier = Modifier.padding(vertical = 8.dp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+      )
+
       when {
         isLoading -> {
           Box(
@@ -176,6 +209,74 @@ fun OutputSelectionBottomSheet(
         }
       }
     }
+  }
+}
+
+@Composable
+private fun VolumeSection(
+  volume: Int,
+  isMuted: Boolean,
+  onVolumeChange: (Int) -> Unit,
+  onMuteToggle: () -> Unit,
+  modifier: Modifier = Modifier
+) {
+  var sliderPosition by remember { mutableFloatStateOf(0f) }
+  var isUserDragging by remember { mutableStateOf(false) }
+  var ignoreServerUpdates by remember { mutableStateOf(false) }
+  val scope = rememberCoroutineScope()
+
+  val volumeNormalized = volume.toFloat() / VOLUME_MAX
+
+  LaunchedEffect(volume) {
+    if (!isUserDragging && !ignoreServerUpdates) {
+      sliderPosition = volumeNormalized
+    }
+  }
+
+  Row(
+    modifier = modifier,
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(16.dp)
+  ) {
+    Icon(
+      imageVector = if (isMuted || volume == 0) {
+        Icons.AutoMirrored.Filled.VolumeOff
+      } else {
+        Icons.AutoMirrored.Filled.VolumeUp
+      },
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier
+        .size(24.dp)
+        .clickable(onClick = onMuteToggle)
+    )
+
+    ThinSlider(
+      value = if (isMuted) {
+        0f
+      } else if (isUserDragging || ignoreServerUpdates) {
+        sliderPosition
+      } else {
+        volumeNormalized
+      },
+      onValueChange = {
+        isUserDragging = true
+        sliderPosition = it
+        onVolumeChange((it * VOLUME_MAX).toInt())
+      },
+      onValueChangeFinished = {
+        isUserDragging = false
+        ignoreServerUpdates = true
+        scope.launch {
+          delay(SLIDER_DEBOUNCE_MS)
+          ignoreServerUpdates = false
+        }
+      },
+      trackColor = MaterialTheme.colorScheme.primary,
+      inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+      thumbColor = MaterialTheme.colorScheme.primary,
+      modifier = Modifier.weight(1f)
+    )
   }
 }
 

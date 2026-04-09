@@ -187,6 +187,10 @@ fun PlayerScreen(
 
   if (showOutputSelection) {
     OutputSelectionBottomSheet(
+      volume = volumeState.volume,
+      isMuted = volumeState.mute,
+      onVolumeChange = viewModel.actions.changeVolume,
+      onMuteToggle = viewModel.actions.mute,
       onDismiss = { showOutputSelection = false }
     )
   }
@@ -827,16 +831,6 @@ private fun PortraitPlayerLayout(
         .padding(horizontal = 24.dp)
     )
 
-    Spacer(modifier = Modifier.weight(32f))
-
-    VolumeSection(
-      volumeState = volumeState,
-      actions = actions,
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp)
-    )
-
     Spacer(modifier = Modifier.weight(48f))
 
     PlayerBottomBar(
@@ -978,14 +972,6 @@ private fun TabletPlayerControls(
 
     Spacer(modifier = Modifier.height(32.dp))
 
-    VolumeSection(
-      volumeState = volumeState,
-      actions = actions,
-      modifier = Modifier.fillMaxWidth()
-    )
-
-    Spacer(modifier = Modifier.height(32.dp))
-
     PlayerBottomBar(
       hasLyrics = hasLyrics,
       showLyrics = showLyrics,
@@ -1079,15 +1065,6 @@ private fun LandscapePlayerLayout(
       // Playback controls
       PlaybackControls(
         playbackState = playbackState,
-        actions = actions,
-        modifier = Modifier.fillMaxWidth()
-      )
-
-      Spacer(modifier = Modifier.height(24.dp))
-
-      // Volume control
-      VolumeSection(
-        volumeState = volumeState,
         actions = actions,
         modifier = Modifier.fillMaxWidth()
       )
@@ -1333,74 +1310,6 @@ private fun ProgressSection(
   }
 }
 
-@Composable
-private fun VolumeSection(
-  volumeState: VolumeState,
-  actions: IPlayerActions,
-  modifier: Modifier = Modifier
-) {
-  val uiColors = LocalPlayerUiColors.current
-  var sliderPosition by remember { mutableFloatStateOf(0f) }
-  var isUserDragging by remember { mutableStateOf(false) }
-  var ignoreServerUpdates by remember { mutableStateOf(false) }
-  val scope = rememberCoroutineScope()
-
-  val volumeNormalized = volumeState.volume.toFloat() / PlayerConstants.VOLUME_MAX
-
-  LaunchedEffect(volumeState.volume) {
-    if (!isUserDragging && !ignoreServerUpdates) {
-      sliderPosition = volumeNormalized
-    }
-  }
-
-  Row(
-    modifier = modifier,
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(8.dp)
-  ) {
-    Icon(
-      imageVector = if (volumeState.mute || volumeState.volume == 0) {
-        Icons.AutoMirrored.Filled.VolumeOff
-      } else {
-        Icons.AutoMirrored.Filled.VolumeUp
-      },
-      contentDescription = stringResource(R.string.main_button_mute_description),
-      tint = uiColors.secondaryForeground,
-      modifier = Modifier
-        .size(20.dp)
-        .clickable(onClick = actions.mute)
-    )
-
-    // Thin volume slider with local state for smooth dragging
-    ThinSlider(
-      value = if (volumeState.mute) {
-        0f
-      } else if (isUserDragging || ignoreServerUpdates) {
-        sliderPosition
-      } else {
-        volumeNormalized
-      },
-      onValueChange = {
-        isUserDragging = true
-        sliderPosition = it
-        actions.changeVolume((it * PlayerConstants.VOLUME_MAX).toInt())
-      },
-      onValueChangeFinished = {
-        isUserDragging = false
-        ignoreServerUpdates = true
-        // Keep ignoring server updates for a bit after release to prevent jumping
-        scope.launch {
-          delay(PlayerConstants.SLIDER_DEBOUNCE_MS)
-          ignoreServerUpdates = false
-        }
-      },
-      trackColor = uiColors.primaryForeground,
-      inactiveTrackColor = uiColors.disabledForeground,
-      thumbColor = uiColors.primaryForeground,
-      modifier = Modifier.weight(1f)
-    )
-  }
-}
 
 @Composable
 private fun PlaybackControls(playbackState: PlaybackState, actions: IPlayerActions, modifier: Modifier = Modifier) {
