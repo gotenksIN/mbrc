@@ -6,10 +6,12 @@ import android.content.Context
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
@@ -60,7 +62,7 @@ class LibrarySyncWorkHandlerImpl(private val workManager: WorkManager) : Library
     val workRequest = LibrarySyncWorker.createWorkRequest(auto)
     workManager.enqueueUniqueWork(
       LibrarySyncWorker.SYNC_WORK_TAG,
-      ExistingWorkPolicy.REPLACE,
+      ExistingWorkPolicy.KEEP,
       workRequest
     )
   }
@@ -244,7 +246,12 @@ class LibrarySyncWorker(
           .putBoolean(AUTO, auto)
           .build()
 
+      val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
       return OneTimeWorkRequestBuilder<LibrarySyncWorker>()
+        .setConstraints(constraints)
         .setInputData(input)
         .build()
     }

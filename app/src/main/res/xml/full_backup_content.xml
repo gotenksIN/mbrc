@@ -9,6 +9,6 @@
 <full-backup-content>
   <!-- Include DataStore preferences for user settings -->
   <include domain="file" path="datastore/settings.preferences_pb" />
-  <!-- Include database for connection settings -->
-  <include domain="database" path="." />
+  <!-- Exclude database for connection settings to prevent plain-text backup -->
+  <exclude domain="database" path="." />
 </full-backup-content>

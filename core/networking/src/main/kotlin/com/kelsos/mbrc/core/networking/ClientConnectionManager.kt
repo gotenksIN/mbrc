@@ -116,7 +116,7 @@ class ClientConnectionManagerImpl(
       connectionState.updateConnection(ConnectionStatus.Offline)
       return
     }
-    Timber.v("Attempting connection on $connectionSettings")
+    Timber.v("Attempting connection on configured settings")
 
     attemptConnectionWithRetry(connectionSettings.toSocketAddress())
   }
@@ -478,7 +478,7 @@ class Connection(
       return@runCatching
     }
     val address = socket.remoteSocketAddress
-    Timber.v("Sending to mbrc:/$address (connected: $isConnected)::$message")
+    Timber.v("Sending message (connected: $isConnected)")
     synchronized(sink) {
       if (isCleanedUp.get()) return@runCatching
       adapter.toJson(sink, message)

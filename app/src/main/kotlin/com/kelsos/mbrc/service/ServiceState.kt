@@ -1,22 +1,25 @@
 package com.kelsos.mbrc.service
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 /**
  * Singleton that tracks the foreground service state.
  */
 object ServiceState {
-  @Volatile
-  var isRunning: Boolean = false
-    private set
+  private val _isRunning = AtomicBoolean(false)
+  private val _isStopping = AtomicBoolean(false)
 
-  @Volatile
-  var isStopping: Boolean = false
-    private set
+  val isRunning: Boolean
+    get() = _isRunning.get()
+
+  val isStopping: Boolean
+    get() = _isStopping.get()
 
   fun setRunning(running: Boolean) {
-    isRunning = running
+    _isRunning.set(running)
   }
 
   fun setStopping(stopping: Boolean) {
-    isStopping = stopping
+    _isStopping.set(stopping)
   }
 }

@@ -45,7 +45,8 @@ class ApiBase(
       val start = now()
       val connection = apiRequestManager.openConnection()
       try {
-        for (currentPage in 0..Int.MAX_VALUE) {
+        var currentPage = 0
+        while (true) {
           val pageStart = now()
           val limit = LIMIT
           val offset = currentPage * limit
@@ -67,6 +68,7 @@ class ApiBase(
           if (page.limit <= 0 || page.offset + page.limit >= page.total) {
             break
           }
+          currentPage++
         }
       } finally {
         connection.close()
@@ -119,6 +121,7 @@ class ApiBase(
   private fun now(): Long = System.currentTimeMillis()
 
   companion object {
+    // Max items per page to prevent large payload parsing timeouts
     const val LIMIT = 800
   }
 }

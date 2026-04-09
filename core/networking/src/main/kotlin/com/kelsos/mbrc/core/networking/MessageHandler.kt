@@ -45,7 +45,7 @@ class MessageHandlerImpl(
       }
 
       val context = Protocol.Companion.fromString(message.context)
-      Timber.v("received message with context -> ${message.context} :: ${message.data}")
+      Timber.v("received message with context -> ${message.context}")
 
       when (context) {
         Protocol.ClientNotAllowed -> clientNotAllowed()

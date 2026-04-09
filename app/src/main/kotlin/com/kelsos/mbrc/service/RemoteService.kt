@@ -36,17 +36,13 @@ class RemoteService : Service() {
       this,
       receiver,
       receiver.filter(this),
-      ContextCompat.RECEIVER_EXPORTED
+      ContextCompat.RECEIVER_NOT_EXPORTED
     )
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     Timber.d("Background Service::Started")
     notificationManager.initialize()
-    startForeground(
-      AppNotificationManager.MEDIA_SESSION_NOTIFICATION_ID,
-      notificationManager.createPlaceholder()
-    )
     appStateManager.start()
     connectionManager.start()
     return super.onStartCommand(intent, flags, startId)
@@ -54,6 +50,7 @@ class RemoteService : Service() {
 
   override fun onDestroy() {
     super.onDestroy()
+    ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
     notificationManager.destroy()
     appStateManager.stop()
     connectionManager.stop()
@@ -66,9 +63,6 @@ class RemoteService : Service() {
   override fun onTaskRemoved(rootIntent: Intent?) {
     super.onTaskRemoved(rootIntent)
     appStateManager.stop()
-  }
-
-  companion object {
-    const val DESTROY_DELAY_MS = 150L
+    connectionManager.stop()
   }
 }

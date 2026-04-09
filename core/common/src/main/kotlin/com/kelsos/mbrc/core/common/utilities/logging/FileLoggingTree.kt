@@ -45,6 +45,10 @@ class FileLoggingTree(context: Context) : Timber.DebugTree() {
   override fun createStackElementTag(element: StackTraceElement): String =
     "${super.createStackElementTag(element)}:${element.lineNumber} [${Thread.currentThread().name}]"
 
+  fun close() {
+    handler.close()
+  }
+
   companion object {
     const val LOGGER_NAME = "mbrc-logger"
     const val LOGS_DIR = "logs"

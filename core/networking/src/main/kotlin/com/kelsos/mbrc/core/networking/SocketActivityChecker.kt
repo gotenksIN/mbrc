@@ -86,7 +86,7 @@ class SocketActivityChecker(dispatchers: AppCoroutineDispatchers) {
   }
 
   companion object {
-    private const val DELAY_MS = 40_000L
+    private const val DELAY_MS = 30_000L // Must be less than socket readTimeoutMs (35s)
     private const val MAX_CONSECUTIVE_TIMEOUTS = 3
   }
 

@@ -57,27 +57,25 @@ class LogHelperImpl(private val appCoroutineDispatchers: AppCoroutineDispatchers
 
       val fos = FileOutputStream(zipFile)
       val zos = ZipOutputStream(fos)
-      logFiles.forEach {
-        val ze = ZipEntry(it.name)
-        zos.putNextEntry(ze)
-        val fin = FileInputStream(it)
-
-        var len: Int
-        do {
-          len = fin.read(buffer)
-          if (len <= 0) {
-            break
+      
+      zos.use { zipStream ->
+        logFiles.forEach { file ->
+          val ze = ZipEntry(file.name)
+          zipStream.putNextEntry(ze)
+          
+          FileInputStream(file).use { fin ->
+            var len: Int
+            do {
+              len = fin.read(buffer)
+              if (len <= 0) {
+                break
+              }
+              zipStream.write(buffer, 0, len)
+            } while (true)
           }
-          zos.write(buffer, 0, len)
-        } while (true)
-
-        fin.close()
-        zos.closeEntry()
+          zipStream.closeEntry()
+        }
       }
-
-      zos.close()
-      fos.flush()
-      fos.close()
 
       zipFile
     }

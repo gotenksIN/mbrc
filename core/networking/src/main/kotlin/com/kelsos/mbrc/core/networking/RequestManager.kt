@@ -34,7 +34,7 @@ class RequestManagerImpl(
 
       try {
         val inputStream = socket.getInputStream()
-        val bufferedReader = inputStream.bufferedReader(Charset.defaultCharset())
+        val bufferedReader = inputStream.bufferedReader(Charsets.UTF_8)
 
         var attempts = 0
         while (handshake && attempts < 10) {
@@ -110,7 +110,7 @@ class RequestManagerImpl(
       ?: throw NoDefaultConnectionException()
 
     try {
-      Timber.v("Preparing connection to $connectionSettings")
+      Timber.v("Preparing connection")
       val socketAddress = connectionSettings.toSocketAddress()
       Timber.v("Creating new socket")
 
