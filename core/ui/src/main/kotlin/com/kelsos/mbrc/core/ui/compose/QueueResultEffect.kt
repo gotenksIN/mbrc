@@ -29,7 +29,7 @@ fun QueueResultEffect(
   var resultKey by remember { mutableIntStateOf(0) }
 
   // Collect flow results to state
-  LaunchedEffect(Unit) {
+  LaunchedEffect(queueResults) {
     queueResults.collect { result ->
       currentResult = result
       resultKey++

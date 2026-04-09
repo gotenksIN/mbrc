@@ -52,7 +52,7 @@ fun GenresTab(
   )
 
   // Handle navigation events
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
         is GenreUiMessage.OpenArtists -> onNavigateToGenreArtists(event.genre)

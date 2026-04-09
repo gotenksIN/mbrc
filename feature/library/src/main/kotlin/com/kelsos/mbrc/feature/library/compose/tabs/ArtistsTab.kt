@@ -51,7 +51,7 @@ fun ArtistsTab(
   )
 
   // Handle navigation events
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.events.filterIsInstance<ArtistUiMessage.OpenArtistAlbums>().collect { event ->
       onNavigateToArtistAlbums(event.artist)
     }

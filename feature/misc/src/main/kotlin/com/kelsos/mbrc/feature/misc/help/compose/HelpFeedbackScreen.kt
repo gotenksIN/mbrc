@@ -182,11 +182,11 @@ private fun FeedbackContent(modifier: Modifier = Modifier, viewModel: FeedbackVi
   var isButtonEnabled by remember { mutableStateOf(true) }
   val scope = rememberCoroutineScope()
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.checkIfLogsExist(context.filesDir)
   }
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
         is FeedbackUiMessage.UpdateLogsExist -> {

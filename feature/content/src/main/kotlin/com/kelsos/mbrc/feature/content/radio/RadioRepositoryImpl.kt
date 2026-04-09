@@ -29,6 +29,10 @@ class RadioRepositoryImpl(
   override suspend fun getRemote(progress: Progress?) {
     withContext(dispatchers.network) {
       val added = epoch()
+      val stored =
+        withContext(dispatchers.database) {
+          dao.all().associate { it.url to it.id }
+        }
       val allPages = contentApi.getRadioStations(progress)
       allPages
         .onCompletion { cause ->
@@ -38,7 +42,10 @@ class RadioRepositoryImpl(
             }
           }
         }.collect { radios ->
-          val data = radios.map { it.toEntity().copy(dateAdded = added) }
+          val data = radios.map { dto ->
+            val existingId = stored[dto.url] ?: 0L
+            dto.toEntity().copy(dateAdded = added, id = existingId)
+          }
           withContext(dispatchers.database) {
             dao.insertAll(data)
           }

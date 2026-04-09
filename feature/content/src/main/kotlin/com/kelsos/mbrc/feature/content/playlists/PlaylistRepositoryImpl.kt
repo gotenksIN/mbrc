@@ -26,6 +26,10 @@ class PlaylistRepositoryImpl(
   override suspend fun getRemote(progress: Progress?) {
     withContext(dispatchers.network) {
       val added = epoch()
+      val stored =
+        withContext(dispatchers.database) {
+          dao.all().associate { it.name to it.id }
+        }
       val allPages = contentApi.getPlaylists(progress)
       allPages
         .onCompletion { cause ->
@@ -35,7 +39,10 @@ class PlaylistRepositoryImpl(
             }
           }
         }.collect { items ->
-          val playlists = items.map { it.toEntity().copy(dateAdded = added) }
+          val playlists = items.map { dto ->
+            val existingId = stored[dto.name] ?: 0L
+            dto.toEntity().copy(dateAdded = added, id = existingId)
+          }
           withContext(dispatchers.database) {
             dao.insertAll(playlists)
           }

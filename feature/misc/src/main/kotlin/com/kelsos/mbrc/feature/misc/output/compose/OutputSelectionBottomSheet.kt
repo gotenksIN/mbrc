@@ -73,7 +73,7 @@ fun OutputSelectionBottomSheet(
   var isLoading by remember { mutableStateOf(true) }
   var errorMessage by remember { mutableStateOf<String?>(null) }
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.reload()
   }
 

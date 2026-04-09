@@ -8,6 +8,7 @@ import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingRepositoryImpl
 import com.kelsos.mbrc.feature.playback.nowplaying.NowPlayingViewModel
 import com.kelsos.mbrc.feature.playback.player.PlayerViewModel
 import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -32,8 +33,8 @@ val playbackModule = module {
   // Repository
   singleOf(::NowPlayingRepositoryImpl) { bind<NowPlayingRepository>() }
 
-  // MoveManager is singleton to track moves across recompositions
-  singleOf(::MoveManagerImpl) { bind<MoveManager>() }
+  // MoveManager is factory to prevent tracking stale state across NowPlaying screen visits
+  factoryOf(::MoveManagerImpl) { bind<MoveManager>() }
 
   // ViewModels
   viewModelOf(::PlayerViewModel)

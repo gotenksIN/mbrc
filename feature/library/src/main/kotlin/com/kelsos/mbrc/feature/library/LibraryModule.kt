@@ -26,6 +26,7 @@ import com.kelsos.mbrc.feature.library.tracks.BrowseTrackViewModel
 import com.kelsos.mbrc.feature.library.tracks.TrackRepositoryImpl
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -62,7 +63,7 @@ val libraryModule = module {
   singleOf(::QueueHandler) { bind<PathQueueUseCase>() }
 
   // ViewModels
-  singleOf(::LibrarySearchModel)
+  factoryOf(::LibrarySearchModel)
   viewModelOf(::LibraryViewModel)
   viewModelOf(::BrowseGenreViewModel)
   viewModelOf(::BrowseArtistViewModel)

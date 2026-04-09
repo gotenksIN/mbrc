@@ -51,11 +51,14 @@ fun MiniControl(
 ) {
   val stateFlow = viewModel.state.collectAsStateWithLifecycle(initialValue = MiniControlState())
 
-  LaunchedEffect(Unit) {
+  val networkErrorMessage = stringResource(CoreUiR.string.connection_error_network_unavailable)
+  val actionFailedMessage = stringResource(R.string.minicontrol_action_failed)
+
+  LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       val message = when (event) {
-        MiniControlUiMessages.NetworkUnavailable -> "Network unavailable"
-        MiniControlUiMessages.ActionFailed -> "Action failed"
+        MiniControlUiMessages.NetworkUnavailable -> networkErrorMessage
+        MiniControlUiMessages.ActionFailed -> actionFailedMessage
       }
       snackbarHostState.showSnackbar(message)
     }

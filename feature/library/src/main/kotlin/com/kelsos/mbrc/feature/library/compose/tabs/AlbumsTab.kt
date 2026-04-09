@@ -63,7 +63,7 @@ fun AlbumsTab(
   val shuffleAllLabel = stringResource(R.string.menu_shuffle_all)
 
   // Handle navigation events
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.events.filterIsInstance<AlbumUiMessage.OpenAlbumTracks>().collect { event ->
       onNavigateToAlbumTracks(event.album)
     }

@@ -57,12 +57,12 @@ fun RadioScreen(
   val networkErrorMessage = stringResource(CoreUiR.string.connection_error_network_unavailable)
   val title = stringResource(R.string.nav_radio)
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     // Trigger initial load without user message
     viewModel.actions.reload(showUserMessage = false)
   }
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(viewModel) {
     viewModel.state.events.collect { event ->
       val message = when (event) {
         is RadioUiMessages.QueueFailed -> queueFailedMessage

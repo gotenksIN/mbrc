@@ -11,21 +11,21 @@ import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 
 @Dao
-interface NowPlayingDao {
+abstract class NowPlayingDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
-  fun insertAll(list: List<NowPlayingEntity>)
+  abstract fun insertAll(list: List<NowPlayingEntity>)
 
   @Query("delete from now_playing")
-  fun deleteAll()
+  abstract fun deleteAll()
 
   @Query("select * from now_playing order by sort_index")
-  fun getAll(): PagingSource<Int, NowPlayingEntity>
+  abstract fun getAll(): PagingSource<Int, NowPlayingEntity>
 
   @Query("select * from now_playing order by sort_index")
-  fun all(): List<NowPlayingEntity>
+  abstract fun all(): List<NowPlayingEntity>
 
   @Query("select id, position, path from now_playing")
-  fun cached(): List<CachedNowPlaying>
+  abstract fun cached(): List<CachedNowPlaying>
 
   @Query(
     """
@@ -34,7 +34,7 @@ interface NowPlayingDao {
       or artist like '%' || :term || '%'
       """
   )
-  fun search(term: String): PagingSource<Int, NowPlayingEntity>
+  abstract fun search(term: String): PagingSource<Int, NowPlayingEntity>
 
   @Query(
     """
@@ -43,37 +43,37 @@ interface NowPlayingDao {
       or artist like '%' || :term || '%'
       """
   )
-  fun simpleSearch(term: String): List<NowPlayingEntity>
+  abstract fun simpleSearch(term: String): List<NowPlayingEntity>
 
   @Query("select count(*) from now_playing")
-  fun count(): Long
+  abstract fun count(): Long
 
   @Query("select count(*) from now_playing")
-  fun observeCount(): Flow<Int>
+  abstract fun observeCount(): Flow<Int>
 
   @Query("delete from now_playing where date_added != :added")
-  fun removePreviousEntries(added: Long)
+  abstract fun removePreviousEntries(added: Long)
 
   @Query("delete from now_playing where position = :position")
-  fun removeByPosition(position: Int): Int
+  abstract fun removeByPosition(position: Int): Int
 
   @Query(
     "update now_playing set position = position - 1, sort_index = sort_index - 1 where position > :position "
   )
-  fun updateRemoved(position: Int): Int
+  abstract fun updateRemoved(position: Int): Int
 
   @Transaction
-  fun remove(position: Int) {
+  open fun remove(position: Int) {
     val deleted = removeByPosition(position)
     val updated = updateRemoved(position)
     Timber.v("deleted $deleted rows and updated $updated")
   }
 
   @Query("select id from now_playing where position = :position")
-  fun findIdByPosition(position: Int): Long
+  abstract fun findIdByPosition(position: Int): Long
 
   @Query("update now_playing set position = :position, sort_index = :position where id = :id")
-  fun updatePosition(id: Long, position: Int)
+  abstract fun updatePosition(id: Long, position: Int)
 
   @Query(
     """
@@ -82,7 +82,7 @@ interface NowPlayingDao {
     and position <= :to
     """
   )
-  fun updateMovedDown(from: Int, to: Int): Int
+  abstract fun updateMovedDown(from: Int, to: Int): Int
 
   @Query(
     """
@@ -91,10 +91,10 @@ interface NowPlayingDao {
     and position >= :to
     """
   )
-  fun updateMovedUp(from: Int, to: Int): Int
+  abstract fun updateMovedUp(from: Int, to: Int): Int
 
   @Transaction
-  fun move(from: Int, to: Int) {
+  open fun move(from: Int, to: Int) {
     val fromId = findIdByPosition(from)
     if (from < to) {
       updateMovedDown(from, to)
@@ -112,7 +112,7 @@ interface NowPlayingDao {
         or artist like '%' || :query || '%'
         """
   )
-  fun findPositionByQuery(query: String): Int?
+  abstract fun findPositionByQuery(query: String): Int?
 
   @Query(
     """
@@ -122,11 +122,11 @@ interface NowPlayingDao {
         limit 1
         """
   )
-  fun searchTrack(query: String): SearchResult?
+  abstract fun searchTrack(query: String): SearchResult?
 
   @Update
-  fun update(existing: List<NowPlayingEntity>)
+  abstract fun update(existing: List<NowPlayingEntity>)
 
   @Query("select * from now_playing where id = :id")
-  fun getById(id: Long): NowPlayingEntity?
+  abstract fun getById(id: Long): NowPlayingEntity?
 }

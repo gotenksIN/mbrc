@@ -20,8 +20,8 @@ class OutputSelectionViewModel(
   private val outputApi: OutputApi,
   private val dispatchers: AppCoroutineDispatchers
 ) : ViewModel() {
-  private val backingOutputs = MutableSharedFlow<OutputResponse>()
-  private val backingEvents = MutableSharedFlow<Outcome<Unit>>()
+  private val backingOutputs = MutableSharedFlow<OutputResponse>(replay = 1)
+  private val backingEvents = MutableSharedFlow<Outcome<Unit>>(extraBufferCapacity = 64)
 
   val outputs: SharedFlow<OutputResponse> = backingOutputs
   val events: SharedFlow<Outcome<Unit>> = backingEvents

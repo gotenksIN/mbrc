@@ -27,7 +27,7 @@ fun GlobalUiMessageHandler(
   val strings = uiMessageStrings()
   val uriHandler = LocalUriHandler.current
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(uiMessageQueue) {
     uiMessageQueue.messages.collect { message ->
       when (message) {
         is UiMessage.PluginUpdateRequired -> onPluginUpdateRequired(message.minimumVersion)

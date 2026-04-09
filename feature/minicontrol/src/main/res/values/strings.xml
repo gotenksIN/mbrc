@@ -9,4 +9,6 @@
   <!-- Unknown values -->
   <string name="unknown_artist">Unknown artist</string>
   <string name="unknown_title">Unknown title</string>
+
+  <string name="minicontrol_action_failed">Action failed</string>
 </resources>
