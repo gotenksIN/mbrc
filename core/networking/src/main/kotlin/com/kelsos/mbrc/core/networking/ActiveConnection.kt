@@ -12,7 +12,7 @@ class ActiveConnection(private val socket: Socket, private val bufferedReader: B
     socket.getOutputStream().write(bytes)
   }
 
-  fun readLine(): String = bufferedReader.readLine()
+  fun readLine(): String? = bufferedReader.readLine()
 
   override fun close() {
     socket.cleanup()

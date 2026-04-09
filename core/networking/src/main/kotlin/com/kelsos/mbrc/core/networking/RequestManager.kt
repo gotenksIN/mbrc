@@ -31,16 +31,25 @@ class RequestManagerImpl(
       val firstMessage = if (handshake) SocketMessage.create(Protocol.Player, "Android") else null
       val socket = connect(firstMessage)
 
-      val inputStream = socket.getInputStream()
-      val bufferedReader = inputStream.bufferedReader(Charset.defaultCharset())
+      try {
+        val inputStream = socket.getInputStream()
+        val bufferedReader = inputStream.bufferedReader(Charset.defaultCharset())
 
-      while (handshake) {
-        if (socket.isHandshakeComplete(bufferedReader)) {
-          break
+        while (handshake) {
+          if (socket.isHandshakeComplete(bufferedReader)) {
+            break
+          }
         }
-      }
 
-      return@withContext ActiveConnection(socket, bufferedReader)
+        return@withContext ActiveConnection(socket, bufferedReader)
+      } catch (e: Exception) {
+        try {
+          socket.close()
+        } catch (closeException: Exception) {
+          Timber.v(closeException, "Failed to close socket after handshake error")
+        }
+        throw e
+      }
     }
 
   private suspend fun Socket.isHandshakeComplete(bufferedReader: BufferedReader): Boolean {
@@ -83,9 +92,9 @@ class RequestManagerImpl(
   override suspend fun request(connection: ActiveConnection, message: SocketMessage): String =
     withContext(dispatchers.network) {
       connection.send(message.getBytes())
-      val readLine = connection.readLine()
+      val readLine = connection.readLine() ?: throw IOException("Connection closed")
       return@withContext readLine.ifEmpty {
-        connection.readLine()
+        connection.readLine() ?: throw IOException("Connection closed")
       }
     }
 
