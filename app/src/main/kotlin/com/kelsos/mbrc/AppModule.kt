@@ -60,6 +60,7 @@ import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**
@@ -158,7 +159,7 @@ val appModule = module {
   }
 
   // App-Level ViewModels
-  singleOf(::DrawerViewModel)
+  viewModelOf(::DrawerViewModel)
 
   // App Resources
   singleOf(::ChangelogResourceProviderImpl) { bind<ChangelogResourceProvider>() }

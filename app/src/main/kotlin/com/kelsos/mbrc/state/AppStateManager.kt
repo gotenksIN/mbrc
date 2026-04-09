@@ -8,6 +8,8 @@ import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.common.utilities.coroutines.ScopeBase
 import com.kelsos.mbrc.service.ServiceLifecycleManager
 import com.kelsos.mbrc.service.mediasession.AppNotificationManager
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -28,8 +30,8 @@ class AppStateManager(
   private val serviceLifecycleManager: ServiceLifecycleManager,
   dispatchers: AppCoroutineDispatchers
 ) : ScopeBase(dispatchers.io) {
-  private var isRunning = false
-  private var positionJob: Job? = null
+  private val isRunning = AtomicBoolean(false)
+  private val positionJob = AtomicReference<Job?>(null)
 
   init {
     launch {
@@ -40,13 +42,12 @@ class AppStateManager(
   }
 
   fun start() {
-    if (isRunning) {
+    if (!isRunning.compareAndSet(false, true)) {
       Timber.v("state manager is already running")
       return
     }
 
     this.onStart()
-    isRunning = true
 
     val playingPosition = appState.playingPosition
     val debouncedPlayerState =
@@ -121,34 +122,36 @@ class AppStateManager(
     this.onStop()
     notifications.cancel()
     stopPositionUpdater()
-    isRunning = false
+    isRunning.set(false)
   }
 
   private fun startPositionUpdater() {
-    stopPositionUpdater()
-    positionJob = launch {
+    val newJob = launch {
       while (isActive) {
         delay(UPDATE_PERIOD_MS)
         updatePosition()
       }
     }
+    positionJob.getAndSet(newJob)?.cancel()
   }
 
   private fun stopPositionUpdater() {
-    positionJob?.cancel()
-    positionJob = null
+    positionJob.getAndSet(null)?.cancel()
   }
 
   private suspend fun updatePosition() {
-    val position = appState.playingPosition.value
-    // For streams (total <= 0), don't coerce - just increment the elapsed time
-    val current = if (position.total <= 0) {
-      position.current + UPDATE_PERIOD_MS
-    } else {
-      (position.current + UPDATE_PERIOD_MS).coerceAtMost(position.total)
-    }
-    if (current != position.current) {
-      appState.updatePlayingPosition(position.copy(current = current))
+    appState.updatePlayingPosition { position ->
+      // For streams (total <= 0), don't coerce - just increment the elapsed time
+      val current = if (position.total <= 0) {
+        position.current + UPDATE_PERIOD_MS
+      } else {
+        (position.current + UPDATE_PERIOD_MS).coerceAtMost(position.total)
+      }
+      if (current != position.current) {
+        position.copy(current = current)
+      } else {
+        position
+      }
     }
   }
 

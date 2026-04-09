@@ -48,9 +48,11 @@ class ArtistRepositoryImpl(
       val allPages = libraryApi.getArtists(progress)
 
       allPages
-        .onCompletion {
-          withContext(dispatchers.database) {
-            dao.removePreviousEntries(added)
+        .onCompletion { cause ->
+          if (cause == null) {
+            withContext(dispatchers.database) {
+              dao.removePreviousEntries(added)
+            }
           }
         }.collect { artists ->
           val data = artists.map { it.toEntity().copy(dateAdded = added) }

@@ -43,9 +43,11 @@ class TrackRepositoryImpl(
       val added = epoch()
       val allPages = libraryApi.getTracks(progress)
       allPages
-        .onCompletion {
-          withContext(dispatchers.database) {
-            dao.removePreviousEntries(added)
+        .onCompletion { cause ->
+          if (cause == null) {
+            withContext(dispatchers.database) {
+              dao.removePreviousEntries(added)
+            }
           }
         }.collect { items ->
           val tracks = items.map { it.toEntity().copy(dateAdded = added) }

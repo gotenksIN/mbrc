@@ -31,9 +31,11 @@ class RadioRepositoryImpl(
       val added = epoch()
       val allPages = contentApi.getRadioStations(progress)
       allPages
-        .onCompletion {
-          withContext(dispatchers.database) {
-            dao.removePreviousEntries(added)
+        .onCompletion { cause ->
+          if (cause == null) {
+            withContext(dispatchers.database) {
+              dao.removePreviousEntries(added)
+            }
           }
         }.collect { radios ->
           val data = radios.map { it.toEntity().copy(dateAdded = added) }

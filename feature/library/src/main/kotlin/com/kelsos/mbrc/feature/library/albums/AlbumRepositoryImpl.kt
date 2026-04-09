@@ -88,9 +88,11 @@ class AlbumRepositoryImpl(
       val allPages = libraryApi.getAlbums(progress)
 
       allPages
-        .onCompletion {
-          withContext(dispatchers.database) {
-            dao.removePreviousEntries(added)
+        .onCompletion { cause ->
+          if (cause == null) {
+            withContext(dispatchers.database) {
+              dao.removePreviousEntries(added)
+            }
           }
         }.collect { albums ->
           val list =

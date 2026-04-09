@@ -28,9 +28,11 @@ class PlaylistRepositoryImpl(
       val added = epoch()
       val allPages = contentApi.getPlaylists(progress)
       allPages
-        .onCompletion {
-          withContext(dispatchers.database) {
-            dao.removePreviousEntries(added)
+        .onCompletion { cause ->
+          if (cause == null) {
+            withContext(dispatchers.database) {
+              dao.removePreviousEntries(added)
+            }
           }
         }.collect { items ->
           val playlists = items.map { it.toEntity().copy(dateAdded = added) }

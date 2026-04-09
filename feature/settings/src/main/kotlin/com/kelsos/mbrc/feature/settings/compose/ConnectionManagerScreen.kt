@@ -78,7 +78,7 @@ import com.kelsos.mbrc.feature.settings.ConnectionManagerViewModel
 import com.kelsos.mbrc.feature.settings.R
 import com.kelsos.mbrc.feature.settings.ScanningState
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * Connection Manager screen for managing MusicBee plugin connections.
@@ -90,7 +90,7 @@ fun ConnectionManagerScreen(
   snackbarHostState: SnackbarHostState,
   onOpenDrawer: () -> Unit,
   modifier: Modifier = Modifier,
-  viewModel: ConnectionManagerViewModel = koinInject()
+  viewModel: ConnectionManagerViewModel = koinViewModel()
 ) {
   val connections = viewModel.connections.collectAsLazyPagingItems()
   val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()

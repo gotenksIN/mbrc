@@ -3,6 +3,7 @@ package com.kelsos.mbrc.core.common.state
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 interface AppStateFlow {
   val playerStatus: StateFlow<PlayerStatusModel>
@@ -15,16 +16,22 @@ interface AppStateFlow {
 
 interface AppStatePublisher : AppStateFlow {
   fun updatePlayerStatus(status: PlayerStatusModel)
+  fun updatePlayerStatus(block: (PlayerStatusModel) -> PlayerStatusModel)
 
   fun updatePlayingTrack(track: TrackInfo)
+  fun updatePlayingTrack(block: (TrackInfo) -> TrackInfo)
 
   fun updateTrackRating(rating: TrackRating)
+  fun updateTrackRating(block: (TrackRating) -> TrackRating)
 
   fun updateTrackDetails(details: TrackDetails)
+  fun updateTrackDetails(block: (TrackDetails) -> TrackDetails)
 
   fun updatePlayingPosition(position: PlayingPosition)
+  fun updatePlayingPosition(block: (PlayingPosition) -> PlayingPosition)
 
   fun updateLyrics(lyrics: List<String>)
+  fun updateLyrics(block: (List<String>) -> List<String>)
 }
 
 class AppState : AppStatePublisher {
@@ -46,23 +53,47 @@ class AppState : AppStatePublisher {
     _playerStatus.value = status
   }
 
+  override fun updatePlayerStatus(block: (PlayerStatusModel) -> PlayerStatusModel) {
+    _playerStatus.update(block)
+  }
+
   override fun updatePlayingTrack(track: TrackInfo) {
     _playingTrack.value = track
+  }
+
+  override fun updatePlayingTrack(block: (TrackInfo) -> TrackInfo) {
+    _playingTrack.update(block)
   }
 
   override fun updateTrackRating(rating: TrackRating) {
     _playingTrackRating.value = rating
   }
 
+  override fun updateTrackRating(block: (TrackRating) -> TrackRating) {
+    _playingTrackRating.update(block)
+  }
+
   override fun updateTrackDetails(details: TrackDetails) {
     _playingTrackDetails.value = details
+  }
+
+  override fun updateTrackDetails(block: (TrackDetails) -> TrackDetails) {
+    _playingTrackDetails.update(block)
   }
 
   override fun updatePlayingPosition(position: PlayingPosition) {
     _playingPosition.value = position
   }
 
+  override fun updatePlayingPosition(block: (PlayingPosition) -> PlayingPosition) {
+    _playingPosition.update(block)
+  }
+
   override fun updateLyrics(lyrics: List<String>) {
     _lyrics.value = lyrics
+  }
+
+  override fun updateLyrics(block: (List<String>) -> List<String>) {
+    _lyrics.update(block)
   }
 }

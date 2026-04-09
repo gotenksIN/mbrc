@@ -40,9 +40,11 @@ class GenreRepositoryImpl(
       val allPages = libraryApi.getGenres(progress)
 
       allPages
-        .onCompletion {
-          withContext(dispatchers.database) {
-            dao.removePreviousEntries(added)
+        .onCompletion { cause ->
+          if (cause == null) {
+            withContext(dispatchers.database) {
+              dao.removePreviousEntries(added)
+            }
           }
         }.collect { genres ->
           val items =

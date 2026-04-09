@@ -48,7 +48,7 @@ class OutputSelectionViewModel(
   }
 
   fun setOutput(output: String) {
-    viewModelScope.launch {
+    viewModelScope.launch(dispatchers.network) {
       try {
         backingOutputs.emit(outputApi.setOutput(output))
       } catch (e: IOException) {

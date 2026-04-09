@@ -53,7 +53,7 @@ val settingsModule = module {
   singleOf(::PluginUpdateCheckUseCaseImpl) { bind<PluginUpdateCheckUseCase>() }
 
   // ViewModels
-  singleOf(::ConnectionManagerViewModel)
+  viewModelOf(::ConnectionManagerViewModel)
   viewModelOf(::SettingsViewModel)
   viewModelOf(::LicensesViewModel)
   viewModelOf(::AppLicenseViewModel)
