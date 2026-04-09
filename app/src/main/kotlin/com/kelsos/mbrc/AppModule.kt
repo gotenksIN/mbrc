@@ -21,6 +21,7 @@ import com.kelsos.mbrc.core.common.state.AppStatePublisher
 import com.kelsos.mbrc.core.common.state.ConnectionState
 import com.kelsos.mbrc.core.common.state.ConnectionStateFlow
 import com.kelsos.mbrc.core.common.state.ConnectionStatePublisher
+import com.kelsos.mbrc.core.common.state.VolumeKeyVisibilityTracker
 import com.kelsos.mbrc.core.common.utilities.AppInfo
 import com.kelsos.mbrc.core.common.utilities.coroutines.AppCoroutineDispatchers
 import com.kelsos.mbrc.core.common.utilities.logging.LogHelper
@@ -147,6 +148,7 @@ val appModule = module {
   singleOf(::DebugLoggingManagerImpl) { bind<DebugLoggingManager>() }
 
   // App State Management
+  singleOf(::VolumeKeyVisibilityTracker)
   singleOf(::AppStateManager)
   singleOf(::PlayingTrackCacheImpl) { bind<PlayingTrackCache>() }
   singleOf(::AppState) {

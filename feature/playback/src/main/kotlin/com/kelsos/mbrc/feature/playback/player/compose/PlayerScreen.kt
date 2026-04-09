@@ -109,6 +109,7 @@ import com.kelsos.mbrc.core.ui.compose.DynamicScreenScaffold
 import com.kelsos.mbrc.core.ui.compose.ThinSlider
 import com.kelsos.mbrc.core.ui.compose.TopBarState
 import com.kelsos.mbrc.feature.misc.output.compose.OutputSelectionBottomSheet
+import com.kelsos.mbrc.core.common.state.VolumeKeyVisibilityTracker
 import com.kelsos.mbrc.feature.playback.R
 import com.kelsos.mbrc.feature.playback.lyrics.LyricsViewModel
 import com.kelsos.mbrc.feature.playback.player.IPlayerActions
@@ -130,7 +131,8 @@ fun PlayerScreen(
   onOpenDrawer: () -> Unit,
   modifier: Modifier = Modifier,
   viewModel: PlayerViewModel = koinViewModel(),
-  lyricsViewModel: LyricsViewModel = koinViewModel()
+  lyricsViewModel: LyricsViewModel = koinViewModel(),
+  visibilityTracker: VolumeKeyVisibilityTracker = koinInject()
 ) {
   // Collect separate state flows for granular recomposition
   val playingTrack by viewModel.playingTrack.collectAsStateWithLifecycle()
@@ -146,6 +148,13 @@ fun PlayerScreen(
   var showLyrics by remember { mutableStateOf(false) }
   var showTrackDetails by remember { mutableStateOf(false) }
   var showQueueBottomSheet by remember { mutableStateOf(false) }
+
+  DisposableEffect(visibilityTracker) {
+    visibilityTracker.setInterceptVolumeKeys(true)
+    onDispose {
+      visibilityTracker.setInterceptVolumeKeys(false)
+    }
+  }
 
   val title = stringResource(R.string.nav_now_playing)
 

@@ -2,6 +2,7 @@ package com.kelsos.mbrc.feature.misc.output.compose
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -69,6 +75,7 @@ fun OutputSelectionBottomSheet(
   val sheetState = rememberModalBottomSheetState()
   val outputs by viewModel.outputs.collectAsStateWithLifecycle(initialValue = OutputResponse())
   val events by viewModel.events.collectAsStateWithLifecycle(initialValue = null)
+  val focusRequester = remember { FocusRequester() }
 
   var isLoading by remember { mutableStateOf(true) }
   var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -103,10 +110,44 @@ fun OutputSelectionBottomSheet(
     }
   }
 
+  LaunchedEffect(focusRequester) {
+    focusRequester.requestFocus()
+  }
+
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = sheetState,
     modifier = modifier
+      .focusRequester(focusRequester)
+      .focusable()
+      .onPreviewKeyEvent { event ->
+      if (event.type == KeyEventType.KeyDown) {
+        when (event.nativeKeyEvent.keyCode) {
+          android.view.KeyEvent.KEYCODE_VOLUME_UP -> {
+            onVolumeChange((volume + 10).coerceAtMost(100))
+            true
+          }
+          android.view.KeyEvent.KEYCODE_VOLUME_DOWN -> {
+            onVolumeChange((volume - 10).coerceAtLeast(0))
+            true
+          }
+          android.view.KeyEvent.KEYCODE_VOLUME_MUTE -> {
+            onMuteToggle()
+            true
+          }
+          else -> false
+        }
+      } else if (event.type == KeyEventType.KeyUp) {
+        when (event.nativeKeyEvent.keyCode) {
+          android.view.KeyEvent.KEYCODE_VOLUME_UP,
+          android.view.KeyEvent.KEYCODE_VOLUME_DOWN,
+          android.view.KeyEvent.KEYCODE_VOLUME_MUTE -> true
+          else -> false
+        }
+      } else {
+        false
+      }
+    }
   ) {
     Column(
       modifier = Modifier

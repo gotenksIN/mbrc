@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import com.kelsos.mbrc.core.common.state.VolumeKeyVisibilityTracker
 import com.kelsos.mbrc.service.ServiceChecker
 import com.kelsos.mbrc.service.mediasession.MediaIntentHandler
 import org.koin.android.ext.android.inject
@@ -22,6 +23,7 @@ class MainActivity : ComponentActivity() {
 
   private val serviceChecker: ServiceChecker by inject()
   private val mediaIntentHandler: MediaIntentHandler by inject()
+  private val visibilityTracker: VolumeKeyVisibilityTracker by inject()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     // Install the splash screen before calling super.onCreate()
@@ -60,7 +62,7 @@ class MainActivity : ComponentActivity() {
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-    if (event.isRemotePlayerVolumeKey()) {
+    if (visibilityTracker.isInterceptVolumeKeys.value && event.isRemotePlayerVolumeKey()) {
       if (event.action == KeyEvent.ACTION_DOWN) {
         mediaIntentHandler.handleKeyEvent(event)
       }
