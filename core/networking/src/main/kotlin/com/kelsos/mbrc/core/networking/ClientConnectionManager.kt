@@ -289,8 +289,14 @@ class ClientConnectionManagerImpl(
 
   private fun setupMessageFlows(connection: Connection) {
     launch {
-      connection.messages.collect { message ->
-        messageHandler.processIncoming(message)
+      runCatching {
+        connection.messages.collect { message ->
+          messageHandler.processIncoming(message)
+        }
+      }.onFailure { exception ->
+        Timber.e(exception, "Message processing failed")
+        connection.cleanup()
+        stop()
       }
     }
 
@@ -329,12 +335,9 @@ class ClientConnectionManagerImpl(
     activityChecker.start()
     activityChecker.setPingTimeoutListener {
       Timber.v("Ping timeout received - resetting socket")
-      connection.cleanup()
-      activityChecker.stop()
       launch {
-        connectionState.updateConnection(ConnectionStatus.Offline)
-        delay(RECONNECT_DELAY_MS) // Brief delay before attempting reconnection
-        attemptConnection()
+        handleConnectionFailure(NetworkError.ConnectionTimeout(null))
+        stop()
       }
     }
   }

@@ -10,6 +10,7 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.net.Socket
 import java.nio.charset.Charset
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -35,10 +36,17 @@ class RequestManagerImpl(
         val inputStream = socket.getInputStream()
         val bufferedReader = inputStream.bufferedReader(Charset.defaultCharset())
 
-        while (handshake) {
+        var attempts = 0
+        while (handshake && attempts < 10) {
+          ensureActive()
           if (socket.isHandshakeComplete(bufferedReader)) {
             break
           }
+          attempts++
+        }
+        
+        if (handshake && attempts >= 10) {
+          throw IOException("Handshake failed after maximum attempts")
         }
 
         return@withContext ActiveConnection(socket, bufferedReader)
@@ -79,8 +87,7 @@ class RequestManagerImpl(
         }
       return isDone
     }
-    Timber.v("was empty")
-    return true
+    throw IOException("Connection closed or empty line received during handshake")
   }
 
   private suspend fun getProtocolPayload(): ProtocolPayload = ProtocolPayload(

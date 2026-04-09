@@ -103,7 +103,7 @@ class MessageHandlerImpl(
         Timber.w("Unsupported protocol version: $protocolVersion")
         uiMessageQueue.messages.emit(UiMessage.ConnectionError.UnsupportedProtocolVersion)
         connectionState.updateConnection(ConnectionStatus.Offline)
-        false
+        throw java.io.IOException("Unsupported protocol version: $protocolVersion")
       }
     }
 
@@ -170,6 +170,7 @@ class MessageHandlerImpl(
   private suspend fun clientNotAllowed() {
     uiMessageQueue.messages.emit(UiMessage.NotAllowed)
     connectionState.updateConnection(ConnectionStatus.Offline)
+    throw java.io.IOException("Client not allowed by the server")
   }
 
   override suspend fun processOutgoing(listener: (SocketMessage) -> Unit) {
